@@ -11,14 +11,15 @@
 			}
 		</style>
 	</head>
-	<body>
+	<body onload="main()">
 		<!-- Contenedor del app -->
-		<div id="container"></div>
+		<canvas id="canvas" width="500" height="500"></canvas>
 
 		<!-- Scripts de biblioteca -->
-		<script src="lib/three.min_r140.js"></script>
-		<script src="lib/OrbitControls.js"></script>
+        <script src="lib/webgl-utils.js"></script>
+        <script src="lib/webgl-debug.js"></script>
 
+        <!-- Script programa -->
 		<script src="js/practica1.js"></script>
 
 	</body>
