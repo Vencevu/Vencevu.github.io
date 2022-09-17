@@ -71,7 +71,9 @@ function click( evento, gl, canvas )
     x = ((x-rect.left)-canvas.width/2) * 2/canvas.width;
     y = ( canvas.height/2 - (y-rect.top)) * 2/canvas.height;
 
-	
+	console.log("x: "+x);
+	console.log("y: "+y);
+
 	// Guardar las coordenadas y copia el array
 	clicks.push(x); clicks.push(y); clicks.push(0.0);
 
