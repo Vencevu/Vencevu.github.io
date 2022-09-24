@@ -94,57 +94,76 @@ function cargarRobot() {
     manosAnteBrazo.position.set(0, 70, 5);
     manosAnteBrazo.rotation.z = Math.PI / 2; //Se gira 90 grados eje z    
     
-    anteBrazoRobot.position.set(0, 120, 0);     
+    anteBrazoRobot.position.set(0, 120, 0);
+
+    var geoPalmaMano = new THREE.BoxGeometry(20, 19, 4);
+
+    var palmaManoIz = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoIz.rotation.x = Math.PI / 2;
+    palmaManoIz.position.set(0,-10,-9.5);
+
+    var palmaManoDe = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoDe.rotation.x = Math.PI / 2;
+    palmaManoDe.position.set(0,12,-9.5);
    
     var geoPinza = new THREE.BufferGeometry();
 
     points = [
-        // new THREE.Vector3(0, -8, -10), 
-        // new THREE.Vector3(19, -8, -10), 
-        // new THREE.Vector3(0, -8, 10), 
-        // new THREE.Vector3(19, -8, 10), 
-        // new THREE.Vector3(0, -12, -10), 
-        // new THREE.Vector3(19, -12, -10), 
-        // new THREE.Vector3(0, -12, 10), 
-        // new THREE.Vector3(19, -12, 10), 
-        // new THREE.Vector3(38, -8, -5), 
         new THREE.Vector3(38, -10, -5),
         new THREE.Vector3(38, -8, 5),
         new THREE.Vector3(38, -10, 5),
+
         new THREE.Vector3(38, -8, -5),
         new THREE.Vector3(38, -8, 5),
-        new THREE.Vector3(38, -10, -5), 
+        new THREE.Vector3(38, -10, -5),
+
+        new THREE.Vector3(38, -8, 5),
+        new THREE.Vector3(19, -6, 10),
+        new THREE.Vector3(19, -6, -10),
+
+        new THREE.Vector3(38, -8, -5),
+        new THREE.Vector3(19, -6, -10),
+        new THREE.Vector3(19, -6, 10),
+
+        new THREE.Vector3(38, -10, 5),
+        new THREE.Vector3(19, -10, 10),
+        new THREE.Vector3(19, -10, -10),
+
+        new THREE.Vector3(38, -10, -5),
+        new THREE.Vector3(19, -10, -10),
+        new THREE.Vector3(19, -10, 10),
     ];
     normals = new Float32Array(
-        [0, 3, 2,
-        0, 1, 3,
-        1, 7, 3,
-        1, 5, 7,
-        5, 6, 7,
-        5, 4, 6,
-        4, 2, 6,
-        4, 0, 2,
-        2, 7, 6,
-        2, 3, 7,
-        4, 1, 0,
-        4, 5, 1,
-        1, 10, 3,
-        1, 8, 10,
-        8, 11, 10,
-        8, 9, 11,
-        9, 7, 11,
-        9, 5, 7,
-        3, 11, 7,
-        3, 10, 11,
-        5, 8, 1,
-        5, 9, 8,]
+        [
+            20,0,0,
+            20,0,0,
+            20,0,0,
+            20,0,0,
+            20,0,0,
+            20,0,0,
+            40, 380, 0,
+            40, 380, 0,
+            40, 380, 0,
+            40, 380, 0,
+            40, 380, 0,
+            40, 380, 0,
+            0,-380,0,
+            0,-380,0,
+            0,-380,0,
+            0,-380,0,
+            0,-380,0,
+            0,-380,0,
+        ]
     );
 
     geoPinza.setFromPoints(points)
     geoPinza.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
     geoPinza.computeVertexNormals();
+
     var pinzaIz = new THREE.Mesh(geoPinza, material);
-    pinzaIz.rotation.y = Math.PI / 2;  
+    pinzaIz.rotation.x = Math.PI;
+    pinzaIz.position.set(0, -18, 0);
+    pinzaIz.rotation.y = -Math.PI / 2;
 
     var pinzaDe = new THREE.Mesh(geoPinza, material);
     pinzaDe.rotation.y = Math.PI / 2;
@@ -159,7 +178,9 @@ function cargarRobot() {
     brazoRobot.add(anteBrazoRobot);  
     anteBrazoRobot.add(manosAnteBrazo);            
     manosAnteBrazo.add(pinzaIz);
-    manosAnteBrazo.add(pinzaDe);  
+    manosAnteBrazo.add(pinzaDe);
+    manosAnteBrazo.add(palmaManoIz);
+    manosAnteBrazo.add(palmaManoDe);
     
     robot.add(baseRobot);     
     baseRobot.add(brazoRobot);
