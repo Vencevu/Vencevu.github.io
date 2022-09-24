@@ -99,18 +99,21 @@ function cargarRobot() {
     var geoPinza = new THREE.BufferGeometry();
 
     points = [
-        new THREE.Vector3(0, -8, -10), 
-        new THREE.Vector3(19, -8, -10), 
-        new THREE.Vector3(0, -8, 10), 
-        new THREE.Vector3(19, -8, 10), 
-        new THREE.Vector3(0, -12, -10), 
-        new THREE.Vector3(19, -12, -10), 
-        new THREE.Vector3(0, -12, 10), 
-        new THREE.Vector3(19, -12, 10), 
-        new THREE.Vector3(38, -8, -5), 
-        new THREE.Vector3(38, -12, -5),
-        new THREE.Vector3(38, -8, 5), 
-        new THREE.Vector3(38, -12, 5), 
+        // new THREE.Vector3(0, -8, -10), 
+        // new THREE.Vector3(19, -8, -10), 
+        // new THREE.Vector3(0, -8, 10), 
+        // new THREE.Vector3(19, -8, 10), 
+        // new THREE.Vector3(0, -12, -10), 
+        // new THREE.Vector3(19, -12, -10), 
+        // new THREE.Vector3(0, -12, 10), 
+        // new THREE.Vector3(19, -12, 10), 
+        // new THREE.Vector3(38, -8, -5), 
+        new THREE.Vector3(38, -10, -5),
+        new THREE.Vector3(38, -8, 5),
+        new THREE.Vector3(38, -10, 5),
+        new THREE.Vector3(38, -8, -5),
+        new THREE.Vector3(38, -8, 5),
+        new THREE.Vector3(38, -10, -5), 
     ];
     normals = new Float32Array(
         [0, 3, 2,
