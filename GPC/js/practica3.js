@@ -51,6 +51,7 @@ function init()
     controlesCam.screenSpacePanning = true;
 	controlesCam.target.set( 0, 0, 0 );
     
+    window.addEventListener('resize', updateAspectRatio);
 }
 
 function loadScene()
