@@ -40,7 +40,7 @@ function loadScene()
 }
 
 function cargarMaterial() {
-    return new THREE.MeshBasicMaterial( { color: 'red', wireframe: true } );
+    return new THREE.MeshNormalMaterial( { color: 'red', wireframe: false } );
 }
 
 function cargarRobot() {
@@ -113,31 +113,64 @@ function cargarRobot() {
         new THREE.Vector3(38, -8, 5),
         new THREE.Vector3(38, -10, 5),
 
+        new THREE.Vector3(38, -10, 5),
+        new THREE.Vector3(19, -6, 10),
+        new THREE.Vector3(19, -10, 10),
+
+        new THREE.Vector3(38, -8, 5),
+        new THREE.Vector3(19, -6, 10),
+        new THREE.Vector3(38, -10, 5),
+
+        new THREE.Vector3(38, -10, -5),
+        new THREE.Vector3(19, -10, -10),
+        new THREE.Vector3(19, -6, -10),
+
+        new THREE.Vector3(38, -8, -5),
+        new THREE.Vector3(38, -10, -5),
+        new THREE.Vector3(19, -6, -10),
+
         new THREE.Vector3(38, -8, -5),
         new THREE.Vector3(38, -8, 5),
         new THREE.Vector3(38, -10, -5),
 
         new THREE.Vector3(38, -8, 5),
-        new THREE.Vector3(19, -6, 10),
         new THREE.Vector3(19, -6, -10),
+        new THREE.Vector3(19, -6, 10),
 
         new THREE.Vector3(38, -8, -5),
         new THREE.Vector3(19, -6, -10),
-        new THREE.Vector3(19, -6, 10),
+        new THREE.Vector3(38, -8, 5),
 
         new THREE.Vector3(38, -10, 5),
         new THREE.Vector3(19, -10, 10),
         new THREE.Vector3(19, -10, -10),
 
         new THREE.Vector3(38, -10, -5),
+        new THREE.Vector3(38, -10, 5),
         new THREE.Vector3(19, -10, -10),
-        new THREE.Vector3(19, -10, 10),
     ];
     normals = new Float32Array(
         [
             20,0,0,
             20,0,0,
             20,0,0,
+
+            20,5,0,
+            20,5,0,
+            20,5,0,
+
+            20,5,0,
+            20,5,0,
+            20,5,0,
+
+            20,-5,0,
+            20,-5,0,
+            20,-5,0,
+
+            20,-5,0,
+            20,-5,0,
+            20,-5,0,
+
             20,0,0,
             20,0,0,
             20,0,0,
@@ -147,12 +180,12 @@ function cargarRobot() {
             40, 380, 0,
             40, 380, 0,
             40, 380, 0,
-            0,-380,0,
-            0,-380,0,
-            0,-380,0,
-            0,-380,0,
-            0,-380,0,
-            0,-380,0,
+            0,380,0,
+            0,380,0,
+            0,380,0,
+            0,380,0,
+            0,380,0,
+            0,380,0,
         ]
     );
 
