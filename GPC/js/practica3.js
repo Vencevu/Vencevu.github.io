@@ -69,7 +69,7 @@ function loadScene()
 }
 
 function cargarMaterial() {
-    return new THREE.MeshNormalMaterial( { color: 'red', wireframe: true } );
+    return new THREE.MeshNormalMaterial( { color: 'red', wireframe: false } );
 }
 
 function cargarRobot() {
@@ -203,15 +203,19 @@ function cargarRobot() {
             20,0,0,
             20,0,0,
             20,0,0,
+
             40, 380, 0,
             40, 380, 0,
             40, 380, 0,
+
             40, 380, 0,
             40, 380, 0,
             40, 380, 0,
+
             0,380,0,
             0,380,0,
             0,380,0,
+            
             0,380,0,
             0,380,0,
             0,380,0,
@@ -265,7 +269,7 @@ function render()
 
     renderer.clear()
 
-    renderer.setViewport(0,0, window.innerWidth /5, window.innerHeight/5);
+    renderer.setViewport(0,window.innerHeight - window.innerHeight/4, window.innerWidth /4, window.innerHeight/4);
     renderer.render(scene, planta);
 
     renderer.setViewport(0,0, window.innerWidth, window.innerHeight);
