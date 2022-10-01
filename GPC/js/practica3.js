@@ -3,7 +3,7 @@ var renderer, scene, camera;
 var material
 
 let alzado, planta, perfil;
-const L = 40;
+const L = 60;
 
 function setCameras(ar) {
     let camaraOrtografica;
