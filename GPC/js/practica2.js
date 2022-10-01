@@ -91,7 +91,7 @@ function cargarRobot() {
 
     // 4. Mano del robot
     const manosAnteBrazo = new THREE.Mesh( geoManos, material );    
-    manosAnteBrazo.position.set(0, 70, 5);
+    manosAnteBrazo.position.set(0, 70, 0);
     manosAnteBrazo.rotation.z = Math.PI / 2; //Se gira 90 grados eje z    
     
     anteBrazoRobot.position.set(0, 120, 0);
