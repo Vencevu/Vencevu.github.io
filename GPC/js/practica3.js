@@ -3,15 +3,15 @@ var renderer, scene, camera;
 var material
 
 let alzado, planta, perfil;
-const L = 50;
+const L = 40;
 
 function setCameras(ar) {
     let camaraOrtografica;
 
     if(ar > 1){
-        camaraOrtografica = new THREE.OrthographicCamera(-L*ar, L*ar, L, -L, -1000, 100);
+        camaraOrtografica = new THREE.OrthographicCamera(-L, L, L, -L, -500, 100);
     }else{
-        camaraOrtografica = new THREE.OrthographicCamera(-L, L, L/ar, -L/ar, -1000, 100);
+        camaraOrtografica = new THREE.OrthographicCamera(-L, L, L, -L, -500, 100);
     }
 
     alzado = camaraOrtografica.clone();
@@ -120,7 +120,7 @@ function cargarRobot() {
 
     // 4. Mano del robot
     const manosAnteBrazo = new THREE.Mesh( geoManos, material );    
-    manosAnteBrazo.position.set(0, 70, 5);
+    manosAnteBrazo.position.set(0, 70, 0);
     manosAnteBrazo.rotation.z = Math.PI / 2; //Se gira 90 grados eje z    
     
     anteBrazoRobot.position.set(0, 120, 0);
@@ -253,13 +253,36 @@ function cargarRobot() {
     scene.add(robot);
 }
 
-function updateAspectRatio() {
-    
+function updateAspectRatio()
+{
+    // Cambia las dimensiones del canvas
+    renderer.setSize(window.innerWidth,window.innerHeight);
+
+    // Nuevo relacion aspecto de la camara
+    const ar = window.innerWidth/window.innerHeight;
+
+    // perspectiva
+    camera.aspect = ar;
+    camera.updateProjectionMatrix();
+
+    // ortografica
+    if (ar > 1) {
+        planta.left = -L;
+        planta.right = L;
+        planta.top = L;
+        planta.bottom = -L;
+    } else {
+        planta.left = -L;
+        planta.right = L;
+        planta.top = L;
+        planta.bottom = -L;
+    }
+
+    planta.updateProjectionMatrix();
 }
 
 function update()
 {
-    
 }
 
 function render()
@@ -269,11 +292,11 @@ function render()
 
     renderer.clear()
 
-    renderer.setViewport(0,window.innerHeight - window.innerHeight/4, window.innerWidth /4, window.innerHeight/4);
-    renderer.render(scene, planta);
-
     renderer.setViewport(0,0, window.innerWidth, window.innerHeight);
     renderer.render( scene, camera );
+
+    renderer.setViewport(0, window.innerHeight - Math.min(window.innerWidth, window.innerHeight) / 4, Math.min(window.innerWidth, window.innerHeight) / 4, Math.min(window.innerWidth, window.innerHeight) / 4)
+    renderer.render(scene, planta);
 }
 
 
