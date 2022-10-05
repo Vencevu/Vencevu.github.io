@@ -91,7 +91,7 @@ function setupGUI() {
         giroAnteBrazoY: 0.0,
         giroAnteBrazoZ: 0.0,
         giroPinza: 177.8,
-        separaPinza: -5.0,
+        separaPinza: 7,
         'Alambres': false
     }
 
@@ -103,7 +103,7 @@ function setupGUI() {
     carpeta.add(effectController, "giroAnteBrazoY", -180.0, 180.0, 0.2).name("Giro Antebrazo Y").onChange(giroAnteBrazoY);
     carpeta.add(effectController, "giroAnteBrazoZ", -90.0, 90.0, 0.2).name("Giro Antebrazo Z").onChange(giroAnteBrazoZ);
     carpeta.add(effectController, "giroPinza", 40.0, 220.0, 0.2).name("Giro Pinza").onChange(giroPinza);
-    carpeta.add(effectController, "separaPinza", -5.0, 7.4, 0.2).name("Separación Pinza").onChange(separaPinza);
+    carpeta.add(effectController, "separaPinza", 0, 15, 0.2).name("Separación Pinza").onChange(separaPinza);
     carpeta.add( effectController, 'Alambres' ).onChange( showAlambres );
 
 }
@@ -135,8 +135,10 @@ function giroPinza(grados) {
 
 function separaPinza(grados) {
     // Se obtiene el valor pasado por el GUI
-    pinzaDe.position.y = grados;
-    pinzaIz.position.y = -grados + 20;
+    pinzaDe.position.y = grados + 10;
+    pinzaIz.position.y = -grados - 10;
+    palmaManoDe.position.y = grados+2;
+    palmaManoIz.position.y = -grados-2;
 }
 
 function moveRobot(event) {
