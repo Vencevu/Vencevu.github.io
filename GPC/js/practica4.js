@@ -109,32 +109,26 @@ function setupGUI() {
 }
 
 function giroBase(grados) {
-    // Se obtiene el valor pasado por el GUI
-    robot.rotation.y = grados * Math.PI / 180; //En radianes
+    robot.rotation.y = grados * Math.PI / 180;
 }
 
 function giroBrazo(grados) {
-    // Se obtiene el valor pasado por el GUI
     brazoRobot.rotation.x = -(grados * Math.PI / 180);
 }
 
 function giroAnteBrazoY(grados) {
-    // Se obtiene el valor pasado por el GUI
     anteBrazoRobot.rotation.y = grados * Math.PI / 180;
 }
 
 function giroAnteBrazoZ(grados) {
-    // Se obtiene el valor pasado por el GUI
     anteBrazoRobot.rotation.x = grados * Math.PI / 180;
 }
 
 function giroPinza(grados) {
-    // Se obtiene el valor pasado por el GUI
     manosAnteBrazo.rotation.x = (grados * Math.PI / 180);
 }
 
 function separaPinza(grados) {
-    // Se obtiene el valor pasado por el GUI
     pinzaDe.position.y = grados + 10;
     pinzaIz.position.y = -grados - 10;
     palmaManoDe.position.y = grados+2;
