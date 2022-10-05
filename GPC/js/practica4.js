@@ -90,7 +90,7 @@ function setupGUI() {
         giroBrazo: 0.0,
         giroAnteBrazoY: 0.0,
         giroAnteBrazoZ: 0.0,
-        giroPinza: 177.8,
+        giroPinza: 0,
         separaPinza: 7,
         'Alambres': false
     }
@@ -102,7 +102,7 @@ function setupGUI() {
     carpeta.add(effectController, "giroBrazo", -45.0, 45.0, 0.2).name("Giro Brazo").onChange(giroBrazo);
     carpeta.add(effectController, "giroAnteBrazoY", -180.0, 180.0, 0.2).name("Giro Antebrazo Y").onChange(giroAnteBrazoY);
     carpeta.add(effectController, "giroAnteBrazoZ", -90.0, 90.0, 0.2).name("Giro Antebrazo Z").onChange(giroAnteBrazoZ);
-    carpeta.add(effectController, "giroPinza", 40.0, 220.0, 0.2).name("Giro Pinza").onChange(giroPinza);
+    carpeta.add(effectController, "giroPinza", -40.0, 220.0, 0.2).name("Giro Pinza").onChange(giroPinza);
     carpeta.add(effectController, "separaPinza", 0, 15, 0.2).name("Separación Pinza").onChange(separaPinza);
     carpeta.add( effectController, 'Alambres' ).onChange( showAlambres );
 
@@ -130,7 +130,7 @@ function giroAnteBrazoZ(grados) {
 
 function giroPinza(grados) {
     // Se obtiene el valor pasado por el GUI
-    manosAnteBrazo.rotation.x = grados * Math.PI / 180;
+    manosAnteBrazo.rotation.x = (grados * Math.PI / 180);
 }
 
 function separaPinza(grados) {
