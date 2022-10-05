@@ -11,6 +11,8 @@ let material
 let alzado, planta, perfil;
 const L = 60;
 
+let anteBrazoRobot, robot, brazoRobot, baseRobot, manosAnteBrazo, palmaManoDe, palmaManoIz, pinzaDe, pinzaIz
+
 function setCameras(ar) {
     let camaraOrtografica;
 
@@ -37,7 +39,6 @@ function setCameras(ar) {
 function init()
 {
     material = cargarMaterial(false);
-    createPanel();
     // Motor de render
     renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -79,46 +80,98 @@ function cargarMaterial() {
 }
 
 function showAlambres(alambres){
-    material = new THREE.MeshNormalMaterial( {wireframe: alambres } );
-    scene = null
-    loadScene()
+    material.wireframe = alambres
 }
 
-function createPanel() {
-
-    const panel = new GUI( { width: 310 } );
-
-    const settings = {
-        'Giro Base': 0,
-        'Giro Brazo': 0,
-        'Giro Antebrazo Y': 0,
-        'Giro Antebrazo Z': 0,
-        'Giro Pinza': 0,
-        'Separacion Pinza': 10,
-        'Alambres': false,
+function setupGUI() {
+    // Objeto controlador de la interfaz
+    var effectController = {
+        giroBase: 0.0,
+        giroBrazo: 0.0,
+        giroAnteBrazoY: 0.0,
+        giroAnteBrazoZ: 0.0,
+        giroPinza: 177.8,
+        separaPinza: -5.0,
+        'Alambres': false
     }
 
-    panel.add( settings, 'Giro Base', -180, 180 ).onChange( showAlambres );
-    panel.add( settings, 'Giro Brazo', -45, 45 ).onChange( showAlambres );
-    panel.add( settings, 'Giro Antebrazo Y', -180, 180 ).onChange( showAlambres );
-    panel.add( settings, 'Giro Antebrazo Z', -90, 90 ).onChange( showAlambres );
-    panel.add( settings, 'Giro Pinza', -40, 220 ).onChange( showAlambres );
-    panel.add( settings, 'Separacion Pinza', 0, 20 ).onChange( showAlambres );
-    panel.add( settings, 'Alambres' ).onChange( showAlambres );
+    var gui = new GUI();
+    var carpeta = gui.addFolder("Control Robot");
+
+    carpeta.add(effectController, "giroBase", -180.0, 180.0, 0.2).name("Giro Base").onChange(giroBase)
+    carpeta.add(effectController, "giroBrazo", -45.0, 45.0, 0.2).name("Giro Brazo").onChange(giroBrazo);
+    carpeta.add(effectController, "giroAnteBrazoY", -180.0, 180.0, 0.2).name("Giro Antebrazo Y").onChange(giroAnteBrazoY);
+    carpeta.add(effectController, "giroAnteBrazoZ", -90.0, 90.0, 0.2).name("Giro Antebrazo Z").onChange(giroAnteBrazoZ);
+    carpeta.add(effectController, "giroPinza", 40.0, 220.0, 0.2).name("Giro Pinza").onChange(giroPinza);
+    carpeta.add(effectController, "separaPinza", -5.0, 7.4, 0.2).name("Separación Pinza").onChange(separaPinza);
+    carpeta.add( effectController, 'Alambres' ).onChange( showAlambres );
+
+}
+
+function giroBase(grados) {
+    // Se obtiene el valor pasado por el GUI
+    robot.rotation.y = grados * Math.PI / 180; //En radianes
+}
+
+function giroBrazo(grados) {
+    // Se obtiene el valor pasado por el GUI
+    brazoRobot.rotation.x = -(grados * Math.PI / 180);
+}
+
+function giroAnteBrazoY(grados) {
+    // Se obtiene el valor pasado por el GUI
+    anteBrazoRobot.rotation.y = grados * Math.PI / 180;
+}
+
+function giroAnteBrazoZ(grados) {
+    // Se obtiene el valor pasado por el GUI
+    anteBrazoRobot.rotation.x = grados * Math.PI / 180;
+}
+
+function giroPinza(grados) {
+    // Se obtiene el valor pasado por el GUI
+    manosAnteBrazo.rotation.x = grados * Math.PI / 180;
+}
+
+function separaPinza(grados) {
+    // Se obtiene el valor pasado por el GUI
+    pinzaDe.position.y = grados;
+    pinzaIz.position.y = -grados + 20;
+}
+
+function moveRobot(event) {
+
+    const keyName = event.key;
+    //console.log(keyName);
+
+    switch (keyName) {
+        case 'ArrowUp':
+            robot.position.z -= 10.0;
+            break;
+        case 'ArrowDown':
+            robot.position.z += 10.0;
+            break;
+        case 'ArrowLeft':
+            robot.position.x -= 10.0;
+            break;
+        case 'ArrowRight':
+            robot.position.x += 10.0;
+            break;
+    }
 
 }
 
 
 function cargarRobot() {
     //Piezas del robot
-    var robot = new THREE.Object3D();
+    robot = new THREE.Object3D();
     // 1. Base de robot, cilindro
     var geoBase = new THREE.CylinderGeometry( 50, 50, 15, 25); //50 radio alto y bajo, 15 de altura, 30 ejes alámbricos
-    const baseRobot = new THREE.Mesh( geoBase, material );
+    baseRobot = new THREE.Mesh( geoBase, material );
     baseRobot.position.set(0, 0, 0);
 
     // 2. Brazo del robot, cilindro gira y -90 grados
-    const brazoRobot = new THREE.Object3D();
+    brazoRobot = new THREE.Object3D();
     var geoEje = new THREE.CylinderGeometry( 20, 20, 18, 15); //20 radio, 18 altura, alambrico 15
     var geoEsparrago = new THREE.BoxGeometry(18, 120, 12);
     var geoRotula = new THREE.SphereGeometry( 20, 15);
@@ -136,7 +189,7 @@ function cargarRobot() {
     brazoRobot.add(rotulaBrazo);
 
     // 3. Antebrazo del robot
-    const anteBrazoRobot = new THREE.Object3D();
+    anteBrazoRobot = new THREE.Object3D();
     var geoDisco = new THREE.CylinderGeometry( 22, 22, 6, 15); //22 radio, 6 altura, alambrico 15
     var geoNervios = new THREE.BoxGeometry(4, 80, 4);
     var geoManos = new THREE.CylinderGeometry(15, 15, 40, 15);
@@ -156,7 +209,7 @@ function cargarRobot() {
     nerviosAnteBrazo4.position.set(-9, 34, -9);  
 
     // 4. Mano del robot
-    const manosAnteBrazo = new THREE.Mesh( geoManos, material );    
+    manosAnteBrazo = new THREE.Mesh( geoManos, material );    
     manosAnteBrazo.position.set(0, 70, 0);
     manosAnteBrazo.rotation.z = Math.PI / 2; //Se gira 90 grados eje z    
     
@@ -164,11 +217,11 @@ function cargarRobot() {
 
     var geoPalmaMano = new THREE.BoxGeometry(20, 19, 4);
 
-    var palmaManoIz = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoIz = new THREE.Mesh(geoPalmaMano, material);
     palmaManoIz.rotation.x = Math.PI / 2;
     palmaManoIz.position.set(0,-10,-9.5);
 
-    var palmaManoDe = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoDe = new THREE.Mesh(geoPalmaMano, material);
     palmaManoDe.rotation.x = Math.PI / 2;
     palmaManoDe.position.set(0,12,-9.5);
    
@@ -263,12 +316,12 @@ function cargarRobot() {
     geoPinza.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
     geoPinza.computeVertexNormals();
 
-    var pinzaIz = new THREE.Mesh(geoPinza, material);
+    pinzaIz = new THREE.Mesh(geoPinza, material);
     pinzaIz.rotation.x = Math.PI;
     pinzaIz.position.set(0, -18, 0);
     pinzaIz.rotation.y = -Math.PI / 2;
 
-    var pinzaDe = new THREE.Mesh(geoPinza, material);
+    pinzaDe = new THREE.Mesh(geoPinza, material);
     pinzaDe.rotation.y = Math.PI / 2;
     pinzaDe.position.set(0, 20, 0);
    
@@ -318,8 +371,8 @@ function updateAspectRatio()
     planta.updateProjectionMatrix();
 }
 
-function update()
-{
+function update() {
+
 }
 
 function render()
@@ -339,4 +392,5 @@ function render()
 
 init();
 loadScene();
+setupGUI()
 render();
