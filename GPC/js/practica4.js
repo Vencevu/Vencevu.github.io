@@ -59,6 +59,7 @@ function init()
 	controlesCam.target.set( 0, 0, 0 );
     
     window.addEventListener('resize', updateAspectRatio);
+    window.addEventListener('keydown', moveRobot, false);
 }
 
 function loadScene()
@@ -92,7 +93,20 @@ function setupGUI() {
         giroAnteBrazoZ: 0.0,
         giroPinza: 0,
         separaPinza: 7,
-        'Alambres': false
+        'Alambres': false,
+        Animar: function(){
+            console.log('A')
+            new TWEEN.Tween(robot.rotation).to({y: 180 * Math.PI / 180}, 1000).start();
+            new TWEEN.Tween(brazoRobot.rotation).to({x: -(-20 * Math.PI / 180)}, 1000).start();
+            new TWEEN.Tween(anteBrazoRobot.rotation).to({y: 30 * Math.PI / 180}, 1000).start();
+            new TWEEN.Tween(anteBrazoRobot.rotation).to({x: 30 * Math.PI / 180}, 1000).start();
+            new TWEEN.Tween(manosAnteBrazo.rotation).to({x: 30 * Math.PI / 180}, 1000).start();
+            new TWEEN.Tween(pinzaDe.position).to({y: 0 + 10}, 800).start();
+            new TWEEN.Tween(pinzaIz.position).to({y: -0 - 10}, 800).start();
+            new TWEEN.Tween(palmaManoDe.position).to({y: 0+2}, 800).start();
+            new TWEEN.Tween(palmaManoIz.position).to({y: -0-2}, 800).start();
+            requestAnimationFrame(animate);
+        }
     }
 
     var gui = new GUI();
@@ -105,40 +119,45 @@ function setupGUI() {
     carpeta.add(effectController, "giroPinza", -40.0, 220.0, 0.2).name("Giro Pinza").onChange(giroPinza);
     carpeta.add(effectController, "separaPinza", 0, 15, 0.2).name("Separación Pinza").onChange(separaPinza);
     carpeta.add( effectController, 'Alambres' ).onChange( showAlambres );
-
+    carpeta.add( effectController, 'Animar' );
 }
 
 function giroBase(grados) {
-    robot.rotation.y = grados * Math.PI / 180;
+    new TWEEN.Tween(robot.rotation).to({y: grados * Math.PI / 180}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function giroBrazo(grados) {
-    brazoRobot.rotation.x = -(grados * Math.PI / 180);
+    new TWEEN.Tween(brazoRobot.rotation).to({x: -(grados * Math.PI / 180)}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function giroAnteBrazoY(grados) {
-    anteBrazoRobot.rotation.y = grados * Math.PI / 180;
+    new TWEEN.Tween(anteBrazoRobot.rotation).to({y: grados * Math.PI / 180}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function giroAnteBrazoZ(grados) {
-    anteBrazoRobot.rotation.x = grados * Math.PI / 180;
+    new TWEEN.Tween(anteBrazoRobot.rotation).to({x: grados * Math.PI / 180}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function giroPinza(grados) {
-    manosAnteBrazo.rotation.x = (grados * Math.PI / 180);
+    new TWEEN.Tween(manosAnteBrazo.rotation).to({x: grados * Math.PI / 180}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function separaPinza(grados) {
-    pinzaDe.position.y = grados + 10;
-    pinzaIz.position.y = -grados - 10;
-    palmaManoDe.position.y = grados+2;
-    palmaManoIz.position.y = -grados-2;
+    new TWEEN.Tween(pinzaDe.position).to({y: grados + 10}, 500).start();
+    new TWEEN.Tween(pinzaIz.position).to({y: -grados - 10}, 500).start();
+    new TWEEN.Tween(palmaManoDe.position).to({y: grados+2}, 500).start();
+    new TWEEN.Tween(palmaManoIz.position).to({y: -grados-2}, 500).start();
+    requestAnimationFrame(animate)
 }
 
 function moveRobot(event) {
 
     const keyName = event.key;
-    //console.log(keyName);
 
     switch (keyName) {
         case 'ArrowUp':
@@ -157,6 +176,10 @@ function moveRobot(event) {
 
 }
 
+function animate() {
+    requestAnimationFrame(animate)
+    TWEEN.update()
+}
 
 function cargarRobot() {
     //Piezas del robot
