@@ -27,9 +27,10 @@ let timeStep = 1 / 60;
 let cubeBody, planeBody, planeThree;
 let slipperyMaterial, groundMaterial;
 let obstacleBody;
+let mountainMesh, domeMesh;
 let obstaclesBodies = [];
 let obstaclesMeshes = [];
-let groundTiles = []
+let roadMesh = [];
 init();
 
 async function init() {
@@ -76,7 +77,7 @@ async function init() {
 
     initCannon();
 
-    addBackground();
+    await addBackground();
 
     addPlaneBody();
     addPlane();
@@ -121,28 +122,29 @@ function animate(){
     cannonDebugger.update();
 
     cubeThree.position.copy(cubeBody.position);
-    cubeThree.position.y = cubeBody.position.y - 0.2;
-	var my_axis = getAxisAndAngelFromQuaternion(cubeBody.quaternion).axis;
-	var my_angle = getAxisAndAngelFromQuaternion(cubeBody.quaternion).angle;
-	cubeThree.quaternion.setFromAxisAngle(my_axis, my_angle);
+
+    var my_axis = getAxisAndAngelFromQuaternion(cubeBody.quaternion).axis;
+    var my_angle = getAxisAndAngelFromQuaternion(cubeBody.quaternion).angle;
+    cubeThree.quaternion.setFromAxisAngle(my_axis, my_angle);
 	
 
     for (let i = 0; i < obstaclesBodies.length; i++) {
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
 	}
+
+    planeBody.position.z -= 0.1
+	mountainMesh.position.z -= 0.1
+	domeMesh.position.z -= 0.1
     planeThree.position.copy(planeBody.position)
 	requestAnimationFrame(animate);
     TWEEN.update()}
 
 function addCubeBody(){
-  let cubeShape = new CANNON.Box(new CANNON.Vec3(2,4,1));
+  let cubeShape = new CANNON.Box(new CANNON.Vec3(1.5,3,0.6));
   slipperyMaterial = new CANNON.Material('slippery');
   cubeBody = new CANNON.Body({ mass: 100,material: slipperyMaterial });
   cubeBody.addShape(cubeShape, new CANNON.Vec3(0,0,0));
-
-  const polyhedronShape = createCustomShape()
-  cubeBody.addShape(polyhedronShape, new CANNON.Vec3(-1, -1, 2));
 
   // change rotation
   var q1 = new THREE.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 180 * -90);
@@ -170,12 +172,13 @@ async function addCube(){
 
 function addPlaneBody(){
     groundMaterial = new CANNON.Material('ground')
-    const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 100));
+    const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 150));
     planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
     planeBody.addShape(planeShape);
     planeBody.position.set(0, 0, -90);
     planeBody.velocity.set(0,0,5);
-	  world.addBody(planeBody);
+	world.addBody(planeBody);
+
 }
 
 
@@ -183,7 +186,7 @@ function addPlaneBody(){
 function addPlane(){
   const texture = new THREE.TextureLoader().load( "assets/plane.png" );
 
-  let geometry =  new THREE.BoxGeometry(20, 0, 200);
+  let geometry =  new THREE.BoxGeometry(20, 0, 300);
   let material = new THREE.MeshBasicMaterial({map: texture});
   planeThree = new THREE.Mesh(geometry, material);
   planeThree.position.set(0, 0, -90);
@@ -360,14 +363,14 @@ async function addBackground(){
 	const gltfLoader = new GLTFLoader().setPath( 'assets/' );
 
 	const mountainLoaded = await gltfLoader.loadAsync( 'mountain.glb' );
-	let mountainMesh = mountainLoaded.scene.children[0];
+	mountainMesh = mountainLoaded.scene.children[0];
 	mountainMesh.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 180 *90);
 	mountainMesh.position.set(0, 60, -90);
 	mountainMesh.scale.set(0.008,0.008,0.008);
 	scene.add(mountainMesh);
 
 	const domeLoaded = await gltfLoader.loadAsync( 'skydome.glb' );
-	let domeMesh = domeLoaded.scene.children[0];
+	domeMesh = domeLoaded.scene.children[0];
 	domeMesh.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 180 *90);
 	domeMesh.position.set(0, -40, 0);
 	domeMesh.scale.set(0.1, 0.1, 0.1);
