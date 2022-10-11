@@ -2,7 +2,6 @@ import { GUI } from '../lib/lil-gui.module.min.js';
 import * as THREE from '../lib/three.module.js';
 import {OrbitControls} from "../lib/OrbitControls.module.js"
 import { GLTFLoader } from '../lib/GLTFLoader.module.js';
-import { OBJLoader } from '../lib/OBJLoader.js';
 import { FBXLoader } from '../lib/FBXLoader.js';
 import * as CANNON from "../lib/cannon-es.js";
 import CannonDebugger from "../lib/cannon-es-debugger.js";
@@ -97,6 +96,20 @@ async function init() {
     window.addEventListener('resize', updateAspectRatio);
 }
 
+function getAxisAndAngelFromQuaternion(q) {
+	var angle = 2 * Math.acos(q.w);
+	var s;
+	if (1 - q.w * q.w < 0.000001) {
+	  // test to avoid divide by zero, s is always positive due to sqrt
+	  // if s close to zero then direction of axis not important
+	  // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
+	  s = 1;
+	} else { 
+	  s = Math.sqrt(1 - q.w * q.w);
+	}
+	return { axis: new THREE.Vector3(q.x/s, q.y/s, q.z/s), angle };
+  }
+
 function animate(){
 	renderer.render(scene, camera);
 
@@ -108,8 +121,11 @@ function animate(){
     cannonDebugger.update();
 
     cubeThree.position.copy(cubeBody.position);
-    cubeThree.position.y = cubeBody.position.y - 0.5;
-    cubeThree.quaternion.copy(cubeBody.quaternion);
+    cubeThree.position.y = cubeBody.position.y - 0.2;
+	var my_axis = getAxisAndAngelFromQuaternion(cubeBody.quaternion).axis;
+	var my_angle = getAxisAndAngelFromQuaternion(cubeBody.quaternion).angle;
+	cubeThree.quaternion.setFromAxisAngle(my_axis, my_angle);
+	
 
     for (let i = 0; i < obstaclesBodies.length; i++) {
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
@@ -120,18 +136,20 @@ function animate(){
     TWEEN.update()}
 
 function addCubeBody(){
-  let cubeShape = new CANNON.Box(new CANNON.Vec3(2,2.3,4));
+  let cubeShape = new CANNON.Box(new CANNON.Vec3(2,4,1));
   slipperyMaterial = new CANNON.Material('slippery');
   cubeBody = new CANNON.Body({ mass: 100,material: slipperyMaterial });
-  cubeBody.addShape(cubeShape, new CANNON.Vec3(0,0,-2));
+  cubeBody.addShape(cubeShape, new CANNON.Vec3(0,0,0));
 
   const polyhedronShape = createCustomShape()
-  cubeBody.addShape(polyhedronShape, new CANNON.Vec3(-2, -2.3, 2));
+  cubeBody.addShape(polyhedronShape, new CANNON.Vec3(-1, -1, 2));
 
   // change rotation
-  cubeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 180 * 180);
-  
-  cubeBody.position.set(0, 2, 0);
+  var q1 = new THREE.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 180 * -90);
+  var q2 = new THREE.Quaternion().setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 180 * 180);
+  var q = new THREE.Quaternion().multiplyQuaternions(q1, q2);
+  cubeBody.quaternion.copy(q);
+  cubeBody.position.set(0, 8, 0);
 
   cubeBody.linearDamping = 0.5;
 
@@ -140,11 +158,9 @@ function addCubeBody(){
 
 async function addCube(){
 
-    const fbxloader = new FBXLoader();
-    const gltfLoader = new GLTFLoader().setPath( 'assets/' );
-    const carLoaddedd = await fbxloader.loadAsync( 'assets/Maserati.fbx' );
+    const fbxloader = new FBXLoader().setPath('assets/');
+    const carLoaddedd = await fbxloader.loadAsync( 'Maserati.fbx' );
     cubeThree = carLoaddedd.children[0];
-    console.log(cubeThree.rotation.x)
     scene.add(cubeThree);
     cubeThree.scale.x = 0.05
     cubeThree.scale.y = 0.05
@@ -155,11 +171,11 @@ async function addCube(){
 function addPlaneBody(){
     groundMaterial = new CANNON.Material('ground')
     const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 100));
-	planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
-	planeBody.addShape(planeShape);
-	planeBody.position.set(0, 0, -90);
+    planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
+    planeBody.addShape(planeShape);
+    planeBody.position.set(0, 0, -90);
     planeBody.velocity.set(0,0,5);
-	world.addBody(planeBody);
+	  world.addBody(planeBody);
 }
 
 
@@ -235,18 +251,18 @@ function movePlayer(){
   // if(keyboard[87]) cubeThree.translateZ(-0.1);
 
   const strengthWS = 500;
-  const forceForward = new CANNON.Vec3(0, 0, strengthWS)
+  const forceForward = new CANNON.Vec3(0, -strengthWS, 0)
   if(keyboard[87]) cubeBody.applyLocalForce(forceForward);
 
   // down letter S
-  const forceBack = new CANNON.Vec3(0, 0, -strengthWS)
+  const forceBack = new CANNON.Vec3(0, strengthWS, 0)
   if(keyboard[83]) cubeBody.applyLocalForce(forceBack);
 
   // left letter A
   // if(keyboard[65]) cube.rotation.y += 0.01;
   // if(keyboard[65]) cube.rotateY(0.01);
 
-  const strengthAD = 200;
+  const strengthAD = 600;
   const forceLeft= new CANNON.Vec3(0, strengthAD, 0)
   if(keyboard[65]) cubeBody.applyTorque(forceLeft);
 
@@ -369,19 +385,4 @@ function updateAspectRatio()
     // perspectiva
     camera.aspect = ar;
     camera.updateProjectionMatrix();
-
-    // ortografica
-    if (ar > 1) {
-        planta.left = -L;
-        planta.right = L;
-        planta.top = L;
-        planta.bottom = -L;
-    } else {
-        planta.left = -L;
-        planta.right = L;
-        planta.top = L;
-        planta.bottom = -L;
-    }
-
-    planta.updateProjectionMatrix();
 }
