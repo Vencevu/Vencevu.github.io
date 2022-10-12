@@ -250,6 +250,7 @@ function addContactMaterials(groundMaterial, slipperyMaterial){
 function addKeysListener(){
   window.addEventListener('keydown', function(event){
     keyboard[event.keyCode] = true;
+	console.log(event.keyCode)
   } , false);
   window.addEventListener('keyup', function(event){
     keyboard[event.keyCode] = false;
@@ -260,15 +261,31 @@ function movePlayer(){
 
 	//Avance/Retroceso
 	const strengthWS = 800;
-	const forceForward = new CANNON.Vec3(0, -strengthWS, 0)
-	if(keyboard[87]) cubeBody.applyLocalForce(forceForward);
-
-	const forceBack = new CANNON.Vec3(0, strengthWS, 0)
-	if(keyboard[83]) cubeBody.applyLocalForce(forceBack);
+	
+	if(keyboard[87]) {
+		if(cubeBody.position.y > 2){
+			const cabezeo = new CANNON.Vec3(-strengthWS, 0, 0);
+			cubeBody.applyTorque(cabezeo);
+		}else{
+			const forceForward = new CANNON.Vec3(0, -strengthWS, 0);
+			cubeBody.applyLocalForce(forceForward);
+		}
+		
+	}
+	
+	if(keyboard[83]) {
+		if(cubeBody.position.y > 2){
+			const cabezeo = new CANNON.Vec3(strengthWS, 0, 0);
+			cubeBody.applyTorque(cabezeo);
+		}else{
+			const forceBack = new CANNON.Vec3(0, strengthWS, 0)
+			cubeBody.applyLocalForce(forceBack);
+		}
+	}
 
 	//Giro
 	const strengthAD = 600;
-	const forceLeft= new CANNON.Vec3(0, strengthAD, 0)
+	const forceLeft= new CANNON.Vec3(0, strengthAD, 0);
 	if(keyboard[65]) cubeBody.applyTorque(forceLeft);
 
 	const forceRigth= new CANNON.Vec3(0, -strengthAD, 0)
@@ -276,7 +293,11 @@ function movePlayer(){
 
 	//Salto
 	const forceUp= new CANNON.Vec3(0, 0, 5000)
-if(keyboard[32]) cubeBody.applyLocalForce(forceUp);
+	if(keyboard[32]) cubeBody.applyLocalForce(forceUp);
+
+	//Turbo
+	const forceTurbo= new CANNON.Vec3(0, -5000, 0)
+	if(keyboard[16]) cubeBody.applyLocalForce(forceTurbo);
 
 }
 
