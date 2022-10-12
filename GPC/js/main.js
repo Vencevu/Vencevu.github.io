@@ -3,7 +3,7 @@ import * as THREE from '../lib/three.module.js';
 import {OrbitControls} from "../lib/OrbitControls.module.js"
 import { GLTFLoader } from '../lib/GLTFLoader.module.js';
 import { FBXLoader } from '../lib/FBXLoader.js';
-import * as CANNON from "../lib/cannon-es.js";
+import {CANNON} from "../lib/cannon-es.js";
 import CannonDebugger from "../lib/cannon-es-debugger.js";
 import { TWEEN } from '../lib/tween.module.min.js';
 
