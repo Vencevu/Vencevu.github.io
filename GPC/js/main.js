@@ -31,6 +31,7 @@ let mountainMesh, domeMesh;
 let obstaclesBodies = [];
 let obstaclesMeshes = [];
 let roadMesh = [];
+let roadBody = []
 init();
 
 async function init() {
@@ -133,10 +134,19 @@ function animate(){
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
 	}
 
-    planeBody.position.z -= 0.1
-	mountainMesh.position.z -= 0.1
-	domeMesh.position.z -= 0.1
-    planeThree.position.copy(planeBody.position)
+	// mountainMesh.position.z -= 0.1
+	// domeMesh.position.z -= 0.1
+	for (let i = 0; i < roadMesh.length; i++) {
+		roadBody[i].position.z += 0.1
+        roadMesh[i].position.copy(roadBody[i].position);
+		if(roadBody[i].position.z > 20 && roadBody.length < 2){
+			addPlaneBody(-41);
+			addPlane(-41);
+		}
+		if(roadBody[i].position.z > 150){
+
+		}
+	}
 	requestAnimationFrame(animate);
     TWEEN.update()}
 
@@ -170,26 +180,29 @@ async function addCube(){
 }
 
 
-function addPlaneBody(){
+function addPlaneBody(z){
+	var posZ = z || 0;
     groundMaterial = new CANNON.Material('ground')
-    const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 150));
+    const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 30));
     planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
     planeBody.addShape(planeShape);
-    planeBody.position.set(0, 0, -90);
+    planeBody.position.set(0, 0, posZ);
     planeBody.velocity.set(0,0,5);
+	roadBody.push(planeBody);
 	world.addBody(planeBody);
-
 }
 
 
 
-function addPlane(){
+function addPlane(z){
+	var posZ = z || 0;
   const texture = new THREE.TextureLoader().load( "assets/plane.png" );
 
-  let geometry =  new THREE.BoxGeometry(20, 0, 300);
+  let geometry =  new THREE.BoxGeometry(20, 0, 60);
   let material = new THREE.MeshBasicMaterial({map: texture});
   planeThree = new THREE.Mesh(geometry, material);
-  planeThree.position.set(0, 0, -90);
+  planeThree.position.set(0, 0, posZ);
+  roadMesh.push(planeThree);
   scene.add(planeThree);
 }
 
@@ -241,6 +254,7 @@ function addContactMaterials(){
 function addKeysListener(){
   window.addEventListener('keydown', function(event){
     keyboard[event.keyCode] = true;
+	console.log(event.keyCode);
   } , false);
   window.addEventListener('keyup', function(event){
     keyboard[event.keyCode] = false;
@@ -272,6 +286,10 @@ function movePlayer(){
   // right letter D
   const forceRigth= new CANNON.Vec3(0, -strengthAD, 0)
   if(keyboard[68]) cubeBody.applyTorque(forceRigth);
+
+  //Space
+  const forceUp= new CANNON.Vec3(10000, 0, 0)
+  if(keyboard[32]) cubeBody.applyTorque(forceUp);
 
 }
 
