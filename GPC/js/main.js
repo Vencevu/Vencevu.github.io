@@ -24,7 +24,7 @@ let enableFollow = true;
 let world;
 let cannonDebugger;
 let timeStep = 1 / 60;
-let cubeBody, planeBody
+let cubeBody, planeBody, groundMaterial
 let obstacleBody;
 let mountainMesh, domeMesh;
 let obstaclesBodies = [];
@@ -79,7 +79,9 @@ async function init() {
     await addBackground();
 
     var gM = addPlane();
-    var sM = await addCube();
+	groundMaterial = gM;
+    var sM = addCubeBody();
+	await addCube();
 	addContactMaterials(gM, sM);
 
     addObstacleBody();
@@ -145,7 +147,7 @@ function animate(){
 	requestAnimationFrame(animate);
     TWEEN.update()}
 
-async function addCube(){
+function addCubeBody(){
 	let cubeShape = new CANNON.Box(new CANNON.Vec3(1.5,3,0.6));
 	var slipperyMaterial = new CANNON.Material('slippery');
 	cubeBody = new CANNON.Body({ mass: 100, material: slipperyMaterial});
@@ -160,6 +162,9 @@ async function addCube(){
 	cubeBody.linearDamping = 0.5;
 	world.addBody(cubeBody);
 
+	return slipperyMaterial;
+}
+async function addCube(){
     const fbxloader = new FBXLoader().setPath('assets/');
     const carLoaddedd = await fbxloader.loadAsync( 'Maserati.fbx' );
     cubeThree = carLoaddedd.children[0];
@@ -167,8 +172,6 @@ async function addCube(){
     cubeThree.scale.x = 0.05
     cubeThree.scale.y = 0.05
     cubeThree.scale.z = 0.05
-
-	return slipperyMaterial;
 }
 
 function addPlaneMesh(posZ){
@@ -183,7 +186,7 @@ function addPlaneMesh(posZ){
 
 function addPlane(z){
 	var posZ = z || 0;
-	var groundMaterial = new CANNON.Material('slippery')
+	var groundMaterial = new CANNON.Material('ground')
 	const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 60));
 	planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
 	planeBody.addShape(planeShape);
@@ -250,7 +253,6 @@ function addContactMaterials(groundMaterial, slipperyMaterial){
 function addKeysListener(){
   window.addEventListener('keydown', function(event){
     keyboard[event.keyCode] = true;
-	console.log(event.keyCode)
   } , false);
   window.addEventListener('keyup', function(event){
     keyboard[event.keyCode] = false;
@@ -270,7 +272,6 @@ function movePlayer(){
 			const forceForward = new CANNON.Vec3(0, -strengthWS, 0);
 			cubeBody.applyLocalForce(forceForward);
 		}
-		
 	}
 	
 	if(keyboard[83]) {
@@ -299,6 +300,13 @@ function movePlayer(){
 	const forceTurbo= new CANNON.Vec3(0, -5000, 0)
 	if(keyboard[16]) cubeBody.applyLocalForce(forceTurbo);
 
+	if(keyboard[82]){
+		world.removeBody(cubeBody);
+		var sM = addCubeBody();
+		addContactMaterials(groundMaterial, sM);
+		console.log(world.getContactMaterial(groundMaterial, sM));
+		addPlaneMesh(0);
+	}
 }
 
 
