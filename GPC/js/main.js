@@ -10,7 +10,7 @@ import { TWEEN } from '../lib/tween.module.min.js';
 let elThreejs = document.getElementById("threejs");
 let camera,scene,renderer;
 
-let axesHelper;
+let jumpEnabled = true;
 let controls;
 let gui;
 
@@ -133,7 +133,7 @@ function animate(){
 	mountainMesh.position.z = cubeBody.position.z;
 	domeMesh.position.z = cubeBody.position.z;
 
-	if(Math.round(cubeBody.position.z) % 120 == 0){
+	if(Math.round(cubeBody.position.z) % 120 == 0 && roadMesh.length < 3){
 		addPlaneMesh(cubeBody.position.z - 120);
 	}
 	
@@ -143,6 +143,9 @@ function animate(){
 			roadMesh.splice(i, 1);
 		}
 	}
+
+	if(cubeBody.position.y < 1) jumpEnabled = true;
+	if(cubeBody.position.y > 5) jumpEnabled = false;
 
 	requestAnimationFrame(animate);
     TWEEN.update()}
@@ -294,17 +297,24 @@ function movePlayer(){
 
 	//Salto
 	const forceUp= new CANNON.Vec3(0, 0, 5000)
-	if(keyboard[32]) cubeBody.applyLocalForce(forceUp);
+	if(keyboard[32] && jumpEnabled) {
+		cubeBody.applyLocalForce(forceUp);
+	}
 
 	//Turbo
 	const forceTurbo= new CANNON.Vec3(0, -5000, 0)
 	if(keyboard[16]) cubeBody.applyLocalForce(forceTurbo);
 
+	//Restart
 	if(keyboard[82]){
+		roadMesh.forEach((item) => {
+			scene.remove(item);
+		})
+		roadMesh = []
+		
 		world.removeBody(cubeBody);
 		var sM = addCubeBody();
 		addContactMaterials(groundMaterial, sM);
-		console.log(world.getContactMaterial(groundMaterial, sM));
 		addPlaneMesh(0);
 	}
 }
