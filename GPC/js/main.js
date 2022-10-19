@@ -24,12 +24,14 @@ let enableFollow = true;
 let world;
 let cannonDebugger;
 let timeStep = 1 / 60;
-let cubeBody, planeBody, groundMaterial
+let cubeBody, planeBody, carMaterial
 let obstacleBody;
 let mountainMesh, domeMesh;
 let obstaclesBodies = [];
 let obstaclesMeshes = [];
 let roadMesh = []
+let roadBody = []
+let reset = false;
 init();
 
 async function init() {
@@ -79,12 +81,10 @@ async function init() {
     await addBackground();
 
     var gM = addPlane();
-	groundMaterial = gM;
-    var sM = addCubeBody();
-	await addCube();
-	addContactMaterials(gM, sM);
+    carMaterial = addCubeBody();
+	await addCube();//El modelo tiene millones de poligonos
+	addContactMaterials(gM, carMaterial);
 
-    addObstacleBody();
     addObstacle();
 
     addKeysListener();
@@ -129,22 +129,27 @@ function animate(){
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
 	}
-	planeBody.position.z = cubeBody.position.z;
 	mountainMesh.position.z = cubeBody.position.z;
 	domeMesh.position.z = cubeBody.position.z;
 
 	if(Math.round(cubeBody.position.z) % 120 == 0 && roadMesh.length < 3){
-		addPlaneMesh(cubeBody.position.z - 120);
+		var gM = addPlane(cubeBody.position.z - 120);
+		addContactMaterials(gM, carMaterial);
 	}
 	
 	for (let i = 0; i < roadMesh.length; i++) {
         if(roadMesh[i].position.z - cubeBody.position.z > 80){
 			scene.remove(roadMesh[i]);
 			roadMesh.splice(i, 1);
+			world.removeBody(roadBody[i]);
+			roadBody.splice(i, 1);
 		}
 	}
 
-	if(cubeBody.position.y < 1) jumpEnabled = true;
+	if(cubeBody.position.y < 1) {
+		jumpEnabled = true;
+		reset = false;
+	}
 	if(cubeBody.position.y > 5) jumpEnabled = false;
 
 	requestAnimationFrame(animate);
@@ -177,16 +182,6 @@ async function addCube(){
     cubeThree.scale.z = 0.05
 }
 
-function addPlaneMesh(posZ){
-	const texture = new THREE.TextureLoader().load( "assets/plane.png" );
-	let geometry =  new THREE.BoxGeometry(20, 0, 120);
-	let material = new THREE.MeshBasicMaterial({map: texture});
-	var planeThree = new THREE.Mesh(geometry, material);
-	planeThree.position.set(0, 0, posZ);
-	scene.add(planeThree);
-	roadMesh.push(planeThree);
-}
-
 function addPlane(z){
 	var posZ = z || 0;
 	var groundMaterial = new CANNON.Material('ground')
@@ -194,8 +189,8 @@ function addPlane(z){
 	planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
 	planeBody.addShape(planeShape);
 	planeBody.position.set(0, 0, posZ);
-	//planeBody.velocity.set(0,0,5);
 	world.addBody(planeBody);
+	roadBody.push(planeBody);
 
 	const texture = new THREE.TextureLoader().load( "assets/plane.png" );
 	let geometry =  new THREE.BoxGeometry(20, 0, 120);
@@ -208,34 +203,25 @@ function addPlane(z){
 	return groundMaterial;
 }
 
-function addObstacleBody(){
+function addObstacle(){
 
-  for (let i = 0; i < 5; i++) {
     let obstacleShape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
     obstacleBody = new CANNON.Body({ mass: 1 });
     obstacleBody.addShape(obstacleShape);
-    obstacleBody.position.set(0, 5,-(i+1) * 15);
+    obstacleBody.position.set(0, 5,-15);
 
     world.addBody(obstacleBody);
     obstaclesBodies.push(obstacleBody);
-
-  }
-}
-
-function addObstacle(){
  
-  let geometry = new THREE.BoxGeometry(2,2,2);
-  const texture = new THREE.TextureLoader().load( "assets/obstacle.png" );
+	let geometry = new THREE.BoxGeometry(2,2,2);
+	const texture = new THREE.TextureLoader().load( "assets/obstacle.png" );
 
-  let material = new THREE.MeshBasicMaterial({ map: texture});
+	let material = new THREE.MeshBasicMaterial({ map: texture});
+	let obstacleMesh = new THREE.Mesh(geometry, material);
 
-  let obstacle = new THREE.Mesh(geometry, material);
-
-  for (let i = 0; i < 5; i++) {
-		let obstacleMesh = obstacle.clone();
-		scene.add(obstacleMesh);
-		obstaclesMeshes.push(obstacleMesh);
-	}
+	scene.add(obstacleMesh);
+	obstaclesMeshes.push(obstacleMesh);
+	
 }
 
 
@@ -306,16 +292,24 @@ function movePlayer(){
 	if(keyboard[16]) cubeBody.applyLocalForce(forceTurbo);
 
 	//Restart
-	if(keyboard[82]){
+	if(keyboard[82] && !reset){
+		reset = true
 		roadMesh.forEach((item) => {
 			scene.remove(item);
-		})
+		});
 		roadMesh = []
+
+		roadBody.forEach((item) => {
+			world.removeBody(item);
+		});
+		roadBody = []
 		
 		world.removeBody(cubeBody);
-		var sM = addCubeBody();
-		addContactMaterials(groundMaterial, sM);
-		addPlaneMesh(0);
+		carMaterial = addCubeBody();
+		var gM = addPlane();
+		addContactMaterials(gM, carMaterial);
+		console.log(roadBody);
+		console.log(roadMesh);
 	}
 }
 
@@ -433,3 +427,574 @@ function updateAspectRatio()
     camera.aspect = ar;
     camera.updateProjectionMatrix();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//porno de vagabundos lexbianos
