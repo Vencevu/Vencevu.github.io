@@ -68,6 +68,7 @@ function loadScene()
     // Escena
     scene = new THREE.Scene();
     var light = new THREE.AmbientLight(0x404040);
+    light.castShadow = true;
     scene.add(light);
 
     var dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -79,6 +80,7 @@ function loadScene()
     spotLight.position.set(100,1000,100);
     spotLight.castShadow = true;
     scene.add(spotLight);
+
     // cargar Robot
     cargarRobot();
 
