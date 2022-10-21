@@ -78,7 +78,6 @@ function loadScene()
     direccional.shadow.camera.far = 1500;
     direccional.shadow.camera.scale.x = 100
     direccional.shadow.camera.scale.y = 100
-    console.log(direccional.shadow)
     scene.add(direccional);
 
     const puntual = new THREE.PointLight(0xFFFFFF,0.3);

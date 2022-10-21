@@ -29,9 +29,12 @@ let obstacleBody;
 let mountainMesh, domeMesh;
 let obstaclesBodies = [];
 let obstaclesMeshes = [];
+let numOfObstacles = 0;
+let maxObstacles = 5;
 let roadMesh = []
 let roadBody = []
 let reset = false;
+let light;
 init();
 
 async function init() {
@@ -55,14 +58,18 @@ async function init() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.shadowMap.enabled = true;
+	renderer.antialias = true;
 	renderer.outputEncoding = THREE.sRGBEncoding;
 
-    const ambient = new THREE.HemisphereLight(0xffffbb, 0x080820);
+    const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
 
-    const light = new THREE.DirectionalLight(0xFFFFFF, 1);
-    light.position.set( 1, 10, 6);
+    light = new THREE.PointLight(0xFFFFFF, 0.5);
+    light.position.set( 0, 20, 0);
+	light.castShadow = true;
+	light.shadow.camera.far = 50;
     scene.add(light);
+	//scene.add(new THREE.CameraHelper(light.shadow.camera));
 
     // orbitControls
     controls = new OrbitControls(camera, renderer.domElement);
@@ -84,8 +91,6 @@ async function init() {
     carMaterial = addCubeBody();
 	await addCube();//El modelo tiene millones de poligonos
 	addContactMaterials(gM, carMaterial);
-
-    addObstacle();
 
     addKeysListener();
     addGUI();
@@ -112,6 +117,7 @@ function animate(){
 	renderer.render(scene, camera);
 
     movePlayer();
+	light.position.set(cubeBody.position.x, 20+cubeBody.position.y, cubeBody.position.z);
 
     if (enableFollow) followPlayer();
 
@@ -124,10 +130,24 @@ function animate(){
     var my_angle = getAxisAndAngelFromQuaternion(cubeBody.quaternion).angle;
     cubeThree.quaternion.setFromAxisAngle(my_axis, my_angle);
 	
+	while(numOfObstacles < maxObstacles) {
+		const x = THREE.MathUtils.randFloatSpread(20);
+		const y = THREE.MathUtils.randFloatSpread(10);
+		const z = THREE.MathUtils.randFloat(20, 30);
+		addObstacle(x, y, z, 100);
+		numOfObstacles++;
+	  }
 
     for (let i = 0; i < obstaclesBodies.length; i++) {
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
+		if(obstaclesBodies[i].position.z -10 > cubeBody.position.z || obstaclesBodies[i].position.y < -5){
+			world.removeBody(obstaclesBodies[i]);
+			scene.remove(obstaclesMeshes[i]);
+			obstaclesBodies.splice(i, 1);
+			obstaclesMeshes.splice(i, 1);
+			numOfObstacles--;
+		}
 	}
 	mountainMesh.position.z = cubeBody.position.z;
 	domeMesh.position.z = cubeBody.position.z;
@@ -168,6 +188,7 @@ function addCubeBody(){
 	cubeBody.quaternion.copy(q);
 	cubeBody.position.set(0, 4, 0);
 	cubeBody.linearDamping = 0.5;
+	
 	world.addBody(cubeBody);
 
 	return slipperyMaterial;
@@ -176,6 +197,8 @@ async function addCube(){
     const fbxloader = new FBXLoader().setPath('assets/');
     const carLoaddedd = await fbxloader.loadAsync( 'Maserati.fbx' );
     cubeThree = carLoaddedd.children[0];
+	cubeThree.castShadow = true;
+	cubeThree.receiveShadow = true;
     scene.add(cubeThree);
     cubeThree.scale.x = 0.05
     cubeThree.scale.y = 0.05
@@ -185,7 +208,7 @@ async function addCube(){
 function addPlane(z){
 	var posZ = z || 0;
 	var groundMaterial = new CANNON.Material('ground')
-	const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.01, 60));
+	const planeShape = new CANNON.Box(new CANNON.Vec3(10, 0.1, 60));
 	planeBody = new CANNON.Body({ mass: 0, material: groundMaterial });
 	planeBody.addShape(planeShape);
 	planeBody.position.set(0, 0, posZ);
@@ -193,31 +216,35 @@ function addPlane(z){
 	roadBody.push(planeBody);
 
 	const texture = new THREE.TextureLoader().load( "assets/plane.png" );
-	let geometry =  new THREE.BoxGeometry(20, 0, 120);
-	let material = new THREE.MeshBasicMaterial({map: texture});
+	let geometry =  new THREE.BoxGeometry(20, 0.1, 120);
+	let material = new THREE.MeshPhongMaterial({color: 'white', map: texture});
 	var planeThree = new THREE.Mesh(geometry, material);
 	planeThree.position.set(0, 0, posZ);
+	planeThree.receiveShadow = true;
+	planeThree.castShadow = true;
 	scene.add(planeThree);
 	roadMesh.push(planeThree);
 
 	return groundMaterial;
 }
 
-function addObstacle(){
+function addObstacle(x, y, z, m){
 
     let obstacleShape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
-    obstacleBody = new CANNON.Body({ mass: 1 });
+    obstacleBody = new CANNON.Body({ mass: m });
     obstacleBody.addShape(obstacleShape);
-    obstacleBody.position.set(0, 5,-15);
-
+    obstacleBody.position.set(x, y,cubeBody.position.z-z);
+	obstacleBody.velocity.set(0,0,10);
     world.addBody(obstacleBody);
     obstaclesBodies.push(obstacleBody);
  
 	let geometry = new THREE.BoxGeometry(2,2,2);
 	const texture = new THREE.TextureLoader().load( "assets/obstacle.png" );
 
-	let material = new THREE.MeshBasicMaterial({ map: texture});
+	let material = new THREE.MeshLambertMaterial({color:'white', map: texture});
 	let obstacleMesh = new THREE.Mesh(geometry, material);
+	obstacleMesh.castShadow = true;
+	obstacleMesh.receiveShadow = true;
 
 	scene.add(obstacleMesh);
 	obstaclesMeshes.push(obstacleMesh);
