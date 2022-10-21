@@ -41,7 +41,9 @@ function init()
     material = cargarMaterial(false);
     // Motor de render
     renderer = new THREE.WebGLRenderer();
+    renderer.antialias = true;
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor( new THREE.Color(0xFFFFFF) );
     document.getElementById('container').appendChild( renderer.domElement );
@@ -49,7 +51,7 @@ function init()
 
     // Camara
     const ar = window.innerWidth/window.innerHeight;
-    camera = new THREE.PerspectiveCamera( 75, ar, 0.1,1000);
+    camera = new THREE.PerspectiveCamera( 75, ar, 0.1,10000);
     setCameras(ar);
     camera.position.set(200, 300, 150);
     camera.lookAt( new THREE.Vector3(0,0,0) );
@@ -67,22 +69,57 @@ function loadScene()
 {
     // Escena
     scene = new THREE.Scene();
-    var light = new THREE.AmbientLight(0x404040);
-    light.castShadow = true;
-    scene.add(light);
+    // Luces
+    const ambiental = new THREE.AmbientLight(0x222222);
+    scene.add(ambiental);
 
-    var dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    dirLight.position.set(0,1,0);
-    dirLight.castShadow = true;
-    scene.add(dirLight);
+    const direccional = new THREE.DirectionalLight(0xFFFFFF,0.3);
+    direccional.position.set(0,500,0);
+    direccional.castShadow = true;
+    direccional.shadow.camera.far = 800;
+    direccional.shadow.camera.scale.x = 100
+    direccional.shadow.camera.scale.y = 100
+    console.log(direccional.shadow)
+    scene.add(direccional);
 
-    var spotLight = new THREE.SpotLight(0xffffff);
-    spotLight.position.set(100,1000,100);
-    spotLight.castShadow = true;
-    scene.add(spotLight);
+    const puntual = new THREE.PointLight(0xFFFFFF,0.3);
+    puntual.position.set(50,500,-150);
+    puntual.castShadow = true;
+    puntual.shadow.camera.far = 800;
+    scene.add(puntual);
+
+    const focal = new THREE.SpotLight(0xFFFFFF,0.3);
+    focal.position.set(0,400,240);
+    focal.target.position.set(0,0,0);
+    focal.angle= Math.PI/7;
+    focal.penumbra = 0.3;
+    focal.castShadow= true;
+    focal.shadow.camera.far = 800;
+    focal.shadow.camera.fov = 80;
+    scene.add(focal);
+    
+    scene.add(new THREE.CameraHelper(focal.shadow.camera));
 
     // cargar Robot
     cargarRobot();
+
+    // Habitacion
+    var path = "images/";
+    const paredes = [];
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"posx.jpg")}) );
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"negx.jpg")}) );
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"posy.jpg")}) );
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"negy.jpg")}) );
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"posz.jpg")}) );
+    paredes.push( new THREE.MeshBasicMaterial({side:THREE.BackSide,
+                  map: new THREE.TextureLoader().load(path+"negz.jpg")}) );
+    const habitacion = new THREE.Mesh( new THREE.BoxGeometry(4000,4000,4000),paredes);
+    scene.add(habitacion);
 
 }
 
@@ -193,8 +230,8 @@ function animate() {
 
 function cargarRobot() {
     var path = "images/";
-    var txSuelo = new THREE.TextureLoader().load(path + "pisometalico_1024.jpg");
-    var matSuelo = new THREE.MeshLambertMaterial({ color: 'white', map: txSuelo });
+    var txSuelo = new THREE.TextureLoader().load(path + "wood512.jpg");
+    var matSuelo = new THREE.MeshPhongMaterial({ color: 'white', map: txSuelo });
     //material para la rotula
     var paredes = [path + "posx.jpg", path + "negx.jpg", path + "posy.jpg", path + "negy.jpg", path + "posz.jpg", path + "negz.jpg"];
 
@@ -211,6 +248,8 @@ function cargarRobot() {
     // 1. Base de robot, cilindro
     var geoBase = new THREE.CylinderGeometry( 50, 50, 15, 25); //50 radio alto y bajo, 15 de altura, 30 ejes alámbricos
     baseRobot = new THREE.Mesh( geoBase, matRobot );
+    baseRobot.castShadow = true;
+    baseRobot.receiveShadow = true;
     baseRobot.position.set(0, 0, 0);
 
     // 2. Brazo del robot, cilindro gira y -90 grados
@@ -221,6 +260,8 @@ function cargarRobot() {
 
     const ejeBrazo = new THREE.Mesh( geoEje, matRobot );    
     ejeBrazo.rotation.z = Math.PI / 2; //Se gira 90 grados eje z
+    ejeBrazo.castShadow = true;
+    ejeBrazo.receiveShadow = true;
     brazoRobot.add(ejeBrazo);
 
     const esparragoBrazo = new THREE.Mesh( geoEsparrago, matRobot );    
@@ -250,23 +291,23 @@ function cargarRobot() {
     nerviosAnteBrazo1.receiveShadow = true;
     nerviosAnteBrazo1.position.set(-9, 34, 9);
 
-    const nerviosAnteBrazo2 = new THREE.Mesh( geoNervios, material );
+    const nerviosAnteBrazo2 = new THREE.Mesh( geoNervios, matRobot );
     nerviosAnteBrazo2.castShadow = true;
     nerviosAnteBrazo2.receiveShadow = true;
     nerviosAnteBrazo2.position.set(9, 34, 9);
 
-    const nerviosAnteBrazo3 = new THREE.Mesh( geoNervios, material );
+    const nerviosAnteBrazo3 = new THREE.Mesh( geoNervios, matRobot );
     nerviosAnteBrazo3.castShadow = true;
     nerviosAnteBrazo3.receiveShadow = true;
     nerviosAnteBrazo3.position.set(9, 34, -9);
 
-    const nerviosAnteBrazo4 = new THREE.Mesh( geoNervios, material );
+    const nerviosAnteBrazo4 = new THREE.Mesh( geoNervios, matRobot );
     nerviosAnteBrazo4.castShadow = true;
     nerviosAnteBrazo4.receiveShadow = true;
     nerviosAnteBrazo4.position.set(-9, 34, -9);  
 
     // 4. Mano del robot
-    manosAnteBrazo = new THREE.Mesh( geoManos, material );
+    manosAnteBrazo = new THREE.Mesh( geoManos, matRobot );
     manosAnteBrazo.castShadow = true;
     manosAnteBrazo.receiveShadow = true;
     manosAnteBrazo.position.set(0, 70, 0);
@@ -276,13 +317,13 @@ function cargarRobot() {
 
     var geoPalmaMano = new THREE.BoxGeometry(20, 19, 4);
 
-    palmaManoIz = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoIz = new THREE.Mesh(geoPalmaMano, matRobot);
     palmaManoIz.castShadow = true;
     palmaManoIz.receiveShadow = true;
     palmaManoIz.rotation.x = Math.PI / 2;
     palmaManoIz.position.set(0,-10,-9.5);
 
-    palmaManoDe = new THREE.Mesh(geoPalmaMano, material);
+    palmaManoDe = new THREE.Mesh(geoPalmaMano, matRobot);
     palmaManoDe.castShadow = true;
     palmaManoDe.receiveShadow = true;
     palmaManoDe.rotation.x = Math.PI / 2;
@@ -379,14 +420,18 @@ function cargarRobot() {
     geoPinza.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
     geoPinza.computeVertexNormals();
 
-    pinzaIz = new THREE.Mesh(geoPinza, material);
+    pinzaIz = new THREE.Mesh(geoPinza, matRobot);
+    pinzaIz.receiveShadow = true;
+    pinzaIz.castShadow = true;
     pinzaIz.rotation.x = Math.PI;
     pinzaIz.position.set(0, -18, 0);
     pinzaIz.rotation.y = -Math.PI / 2;
 
-    pinzaDe = new THREE.Mesh(geoPinza, material);
+    pinzaDe = new THREE.Mesh(geoPinza, matRobot);
     pinzaDe.rotation.y = Math.PI / 2;
     pinzaDe.position.set(0, 20, 0);
+    pinzaDe.receiveShadow = true;
+    pinzaDe.castShadow = true;
    
     // Grafo de elementos
     anteBrazoRobot.add(discoAnteBrazo);
@@ -407,9 +452,8 @@ function cargarRobot() {
 
     // Un suelo (1000 x 1000) plano XZ
     var suelo = new THREE.Mesh( new THREE.PlaneGeometry(1000,1000, 30,30), matSuelo );
-    suelo.castShadow = false;
-    suelo.receiveShadow = true;
     suelo.rotation.x = -Math.PI / 2;
+    suelo.receiveShadow = true;
     scene.add(suelo);
 
 }
