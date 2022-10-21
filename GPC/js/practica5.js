@@ -6,7 +6,7 @@ import { TWEEN } from '../lib/tween.module.min.js'
 
 var renderer, scene, camera;
 
-let material
+let alambres = false;
 
 let alzado, planta, perfil;
 const L = 60;
@@ -38,7 +38,6 @@ function setCameras(ar) {
 
 function init()
 {
-    material = cargarMaterial(false);
     // Motor de render
     renderer = new THREE.WebGLRenderer();
     renderer.antialias = true;
@@ -74,16 +73,16 @@ function loadScene()
     scene.add(ambiental);
 
     const direccional = new THREE.DirectionalLight(0xFFFFFF,0.3);
-    direccional.position.set(0,500,0);
+    direccional.position.set(-500,500,-500);
     direccional.castShadow = true;
-    direccional.shadow.camera.far = 800;
+    direccional.shadow.camera.far = 1500;
     direccional.shadow.camera.scale.x = 100
     direccional.shadow.camera.scale.y = 100
     console.log(direccional.shadow)
     scene.add(direccional);
 
     const puntual = new THREE.PointLight(0xFFFFFF,0.3);
-    puntual.position.set(50,500,-150);
+    puntual.position.set(220,500,-150);
     puntual.castShadow = true;
     puntual.shadow.camera.far = 800;
     scene.add(puntual);
@@ -98,10 +97,10 @@ function loadScene()
     focal.shadow.camera.fov = 80;
     scene.add(focal);
     
-    scene.add(new THREE.CameraHelper(focal.shadow.camera));
+    //scene.add(new THREE.CameraHelper(focal.shadow.camera));
 
     // cargar Robot
-    cargarRobot();
+    cargarRobot(alambres);
 
     // Habitacion
     var path = "images/";
@@ -123,12 +122,12 @@ function loadScene()
 
 }
 
-function cargarMaterial() {
-    return new THREE.MeshNormalMaterial( {wireframe: false } );
-}
-
-function showAlambres(alambres){
-    material.wireframe = alambres
+function showAlambres(alam){
+    alambres = alam;
+    while(scene.children.length > 0){ 
+        scene.remove(scene.children[0]); 
+    }
+    loadScene();
 }
 
 function setupGUI() {
@@ -228,7 +227,7 @@ function animate() {
     TWEEN.update()
 }
 
-function cargarRobot() {
+function cargarRobot(wf) {
     var path = "images/";
     var txSuelo = new THREE.TextureLoader().load(path + "wood512.jpg");
     var matSuelo = new THREE.MeshPhongMaterial({ color: 'white', map: txSuelo });
@@ -236,12 +235,15 @@ function cargarRobot() {
     var paredes = [path + "posx.jpg", path + "negx.jpg", path + "posy.jpg", path + "negy.jpg", path + "posz.jpg", path + "negz.jpg"];
 
     var mapaEntorno = new THREE.CubeTextureLoader().load(paredes);
-    var matRotula = new THREE.MeshPhongMaterial({ color: 'white', specular: 0x99BBFF, shininess: 50, envMap: mapaEntorno });
+    var matRotula = new THREE.MeshPhongMaterial({ color: 'white', specular: 0x99BBFF, shininess: 50, envMap: mapaEntorno, wireframe: wf });
 
 
     //material para el robot
     var texturaRobot = new THREE.TextureLoader().load(path + "metal_128.jpg");
-    var matRobot = new THREE.MeshLambertMaterial({ color: 'white', map: texturaRobot });
+    var matRobot = new THREE.MeshPhongMaterial({ color: 'white', map: texturaRobot, wireframe: wf });
+
+    var texturaRobot2 = new THREE.TextureLoader().load(path + "burberry_256.jpg");
+    var matRobot2 = new THREE.MeshLambertMaterial({ color: 'white', map: texturaRobot2, wireframe: wf });
 
     //Piezas del robot
     robot = new THREE.Object3D();
@@ -286,28 +288,28 @@ function cargarRobot() {
     discoAnteBrazo.castShadow = true;
     discoAnteBrazo.receiveShadow = true;
 
-    const nerviosAnteBrazo1 = new THREE.Mesh( geoNervios, matRobot );
+    const nerviosAnteBrazo1 = new THREE.Mesh( geoNervios, matRobot2 );
     nerviosAnteBrazo1.castShadow = true;
     nerviosAnteBrazo1.receiveShadow = true;
     nerviosAnteBrazo1.position.set(-9, 34, 9);
 
-    const nerviosAnteBrazo2 = new THREE.Mesh( geoNervios, matRobot );
+    const nerviosAnteBrazo2 = new THREE.Mesh( geoNervios, matRobot2 );
     nerviosAnteBrazo2.castShadow = true;
     nerviosAnteBrazo2.receiveShadow = true;
     nerviosAnteBrazo2.position.set(9, 34, 9);
 
-    const nerviosAnteBrazo3 = new THREE.Mesh( geoNervios, matRobot );
+    const nerviosAnteBrazo3 = new THREE.Mesh( geoNervios, matRobot2 );
     nerviosAnteBrazo3.castShadow = true;
     nerviosAnteBrazo3.receiveShadow = true;
     nerviosAnteBrazo3.position.set(9, 34, -9);
 
-    const nerviosAnteBrazo4 = new THREE.Mesh( geoNervios, matRobot );
+    const nerviosAnteBrazo4 = new THREE.Mesh( geoNervios, matRobot2 );
     nerviosAnteBrazo4.castShadow = true;
     nerviosAnteBrazo4.receiveShadow = true;
     nerviosAnteBrazo4.position.set(-9, 34, -9);  
 
     // 4. Mano del robot
-    manosAnteBrazo = new THREE.Mesh( geoManos, matRobot );
+    manosAnteBrazo = new THREE.Mesh( geoManos, matRobot2 );
     manosAnteBrazo.castShadow = true;
     manosAnteBrazo.receiveShadow = true;
     manosAnteBrazo.position.set(0, 70, 0);
@@ -317,13 +319,13 @@ function cargarRobot() {
 
     var geoPalmaMano = new THREE.BoxGeometry(20, 19, 4);
 
-    palmaManoIz = new THREE.Mesh(geoPalmaMano, matRobot);
+    palmaManoIz = new THREE.Mesh(geoPalmaMano, matRobot2);
     palmaManoIz.castShadow = true;
     palmaManoIz.receiveShadow = true;
     palmaManoIz.rotation.x = Math.PI / 2;
     palmaManoIz.position.set(0,-10,-9.5);
 
-    palmaManoDe = new THREE.Mesh(geoPalmaMano, matRobot);
+    palmaManoDe = new THREE.Mesh(geoPalmaMano, matRobot2);
     palmaManoDe.castShadow = true;
     palmaManoDe.receiveShadow = true;
     palmaManoDe.rotation.x = Math.PI / 2;
@@ -416,18 +418,52 @@ function cargarRobot() {
         ]
     );
 
+    var uvs = new Float32Array(
+        [
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1,
+            1,0,
+            1,1,
+            0,0,
+            0,1
+        ]
+    );
+
     geoPinza.setFromPoints(points)
     geoPinza.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
+    geoPinza.setAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
     geoPinza.computeVertexNormals();
 
-    pinzaIz = new THREE.Mesh(geoPinza, matRobot);
+    pinzaIz = new THREE.Mesh(geoPinza, matRobot2);
     pinzaIz.receiveShadow = true;
     pinzaIz.castShadow = true;
     pinzaIz.rotation.x = Math.PI;
     pinzaIz.position.set(0, -18, 0);
     pinzaIz.rotation.y = -Math.PI / 2;
 
-    pinzaDe = new THREE.Mesh(geoPinza, matRobot);
+    pinzaDe = new THREE.Mesh(geoPinza, matRobot2);
     pinzaDe.rotation.y = Math.PI / 2;
     pinzaDe.position.set(0, 20, 0);
     pinzaDe.receiveShadow = true;
