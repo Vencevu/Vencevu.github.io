@@ -16,7 +16,9 @@ let gui;
 
 let cubeThree;
 let keyboard = {};
-
+let game_over = false;
+let puntos = 0;
+let enabledPoints = []
 // camera follow player
 let enableFollow = true;
 
@@ -114,6 +116,33 @@ function getAxisAndAngelFromQuaternion(q) {
   }
 
 function animate(){
+	if(game_over) {
+		document.getElementById("gameover").style.visibility = 'visible';
+		//Restart
+		if(keyboard[82] && !reset){
+			puntos = 0
+			document.querySelector('#puntuacion label').innerText = 'Puntos: ' + puntos;
+			reset = true
+			game_over = false;
+			document.getElementById("gameover").style.visibility = 'hidden';
+			roadMesh.forEach((item) => {
+				scene.remove(item);
+			});
+			roadMesh = []
+
+			roadBody.forEach((item) => {
+				world.removeBody(item);
+			});
+			roadBody = []
+			
+			world.removeBody(cubeBody);
+			carMaterial = addCubeBody();
+			var gM = addPlane();
+			addContactMaterials(gM, carMaterial);
+		}
+		requestAnimationFrame(animate);
+		return;
+	}
 	renderer.render(scene, camera);
 
     movePlayer();
@@ -133,7 +162,7 @@ function animate(){
 	while(numOfObstacles < maxObstacles) {
 		const x = THREE.MathUtils.randFloatSpread(20);
 		const y = THREE.MathUtils.randFloatSpread(10);
-		const z = THREE.MathUtils.randFloat(20, 30);
+		const z = THREE.MathUtils.randFloat(40, 60);
 		addObstacle(x, y, z, 100);
 		numOfObstacles++;
 	  }
@@ -141,6 +170,13 @@ function animate(){
     for (let i = 0; i < obstaclesBodies.length; i++) {
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
+		if(obstaclesBodies[i].position.z > cubeBody.position.z){
+			if(!containsObject(obstaclesBodies[i], enabledPoints)){
+				puntos++;
+				enabledPoints.push(obstaclesBodies[i])
+				document.querySelector('#puntuacion label').innerText = 'Puntos: ' + puntos;
+			}
+		}
 		if(obstaclesBodies[i].position.z -10 > cubeBody.position.z || obstaclesBodies[i].position.y < -5){
 			world.removeBody(obstaclesBodies[i]);
 			scene.remove(obstaclesMeshes[i]);
@@ -175,6 +211,17 @@ function animate(){
 	requestAnimationFrame(animate);
     TWEEN.update()}
 
+function containsObject(obj, list) {
+	var i;
+	for (i = 0; i < list.length; i++) {
+		if (list[i] === obj) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function addCubeBody(){
 	let cubeShape = new CANNON.Box(new CANNON.Vec3(1.5,3,0.6));
 	var slipperyMaterial = new CANNON.Material('slippery');
@@ -188,6 +235,12 @@ function addCubeBody(){
 	cubeBody.quaternion.copy(q);
 	cubeBody.position.set(0, 4, 0);
 	cubeBody.linearDamping = 0.5;
+
+	cubeBody.addEventListener("collide",function(e){
+		if(!containsObject(e.body, roadBody)){
+			game_over = true;
+		}
+	});
 	
 	world.addBody(cubeBody);
 
@@ -282,8 +335,8 @@ function movePlayer(){
 	
 	if(keyboard[87]) {
 		if(cubeBody.position.y > 2){
-			const cabezeo = new CANNON.Vec3(-strengthWS, 0, 0);
-			cubeBody.applyTorque(cabezeo);
+			cubeThree.rotateX(THREE.Math.degToRad(5));
+			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceForward = new CANNON.Vec3(0, -strengthWS, 0);
 			cubeBody.applyLocalForce(forceForward);
@@ -292,8 +345,8 @@ function movePlayer(){
 	
 	if(keyboard[83]) {
 		if(cubeBody.position.y > 2){
-			const cabezeo = new CANNON.Vec3(strengthWS, 0, 0);
-			cubeBody.applyTorque(cabezeo);
+			cubeThree.rotateX(THREE.Math.degToRad(-5));
+			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceBack = new CANNON.Vec3(0, strengthWS, 0)
 			cubeBody.applyLocalForce(forceBack);
@@ -301,12 +354,29 @@ function movePlayer(){
 	}
 
 	//Giro
-	const strengthAD = 600;
-	const forceLeft= new CANNON.Vec3(0, strengthAD, 0);
-	if(keyboard[65]) cubeBody.applyTorque(forceLeft);
+	if(keyboard[65]) {
+		if(cubeBody.position.y < 2){
+			cubeThree.rotation.z += THREE.Math.degToRad(5);
+			cubeBody.quaternion.copy(cubeThree.quaternion)
+		}else{
+			if(THREE.Math.radToDeg(cubeThree.rotation.y) > -84){
+				cubeThree.rotateY(THREE.Math.degToRad(5));
+				cubeBody.quaternion.copy(cubeThree.quaternion);
+			}
+		}
+	}
 
-	const forceRigth= new CANNON.Vec3(0, -strengthAD, 0)
-	if(keyboard[68]) cubeBody.applyTorque(forceRigth);
+	if(keyboard[68]) {
+		if(cubeBody.position.y < 2){
+			cubeThree.rotation.z -= THREE.Math.degToRad(5);
+			cubeBody.quaternion.copy(cubeThree.quaternion);
+		}else{
+			if(THREE.Math.radToDeg(cubeThree.rotation.y) < 84){
+				cubeThree.rotateY(THREE.Math.degToRad(-5));
+				cubeBody.quaternion.copy(cubeThree.quaternion);
+			}
+		}
+	}
 
 	//Salto
 	const forceUp= new CANNON.Vec3(0, 0, 5000)
@@ -335,8 +405,6 @@ function movePlayer(){
 		carMaterial = addCubeBody();
 		var gM = addPlane();
 		addContactMaterials(gM, carMaterial);
-		console.log(roadBody);
-		console.log(roadMesh);
 	}
 }
 
