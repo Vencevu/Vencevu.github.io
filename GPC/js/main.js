@@ -8,7 +8,7 @@ import CannonDebugger from "../lib/cannon-es-debugger.js";
 import { TWEEN } from '../lib/tween.module.min.js';
 
 let elThreejs = document.getElementById("threejs");
-let camera,scene,renderer;
+let camera,scene,renderer, obstacles, field, actor;
 
 let jumpEnabled = true;
 let controls;
@@ -89,7 +89,9 @@ async function init() {
 	elThreejs.appendChild(renderer.domElement);
 
     initCannon();
-
+	obstacles = new THREE.Object3D();
+	field = new THREE.Object3D();
+	actor = new THREE.Object3D();
     await addBackground();
 
     var gM = addPlane();
@@ -99,6 +101,9 @@ async function init() {
 
     addKeysListener();
     addGUI();
+	scene.add(obstacles);
+	scene.add(field);
+	scene.add(actor);
 
     animate();
     window.addEventListener('resize', updateAspectRatio);
@@ -130,17 +135,17 @@ function resetWorld(){
 	obstaclesBodies2 = []
 
 	obstaclesMeshes.forEach((item) => {
-		scene.remove(item);
+		obstacles.remove(item);
 	});
 	obstaclesMeshes = []
 
 	obstaclesMeshes2.forEach((item) => {
-		scene.remove(item);
+		obstacles.remove(item);
 	});
 	obstaclesMeshes2 = []
 
 	roadMesh.forEach((item) => {
-		scene.remove(item);
+		field.remove(item);
 	});
 	roadMesh = []
 
@@ -165,6 +170,7 @@ function animate(){
 			reset = true
 			game_over = false;
 			turbo = 100;
+			document.querySelector('#turbo label').innerText = 'Turbo: ' + turbo;
 			obstacleType2 = false;
 			numOfObstacles = 0;
 			document.getElementById("gameover").style.visibility = 'hidden';
@@ -220,7 +226,7 @@ function animate(){
 		}
 		if(obstaclesBodies2[i].position.z -20 > cubeBody.position.z || obstaclesBodies2[i].position.y < -5){
 			world.removeBody(obstaclesBodies2[i]);
-			scene.remove(obstaclesMeshes2[i]);
+			obstacles.remove(obstaclesMeshes2[i]);
 			obstaclesBodies2.splice(i, 1);
 			obstaclesMeshes2.splice(i, 1);
 			obstacleType2 = false;
@@ -241,7 +247,7 @@ function animate(){
 		}
 		if(obstaclesBodies[i].position.z -10 > cubeBody.position.z || obstaclesBodies[i].position.y < -5){
 			world.removeBody(obstaclesBodies[i]);
-			scene.remove(obstaclesMeshes[i]);
+			obstacles.remove(obstaclesMeshes[i]);
 			obstaclesBodies.splice(i, 1);
 			obstaclesMeshes.splice(i, 1);
 			numOfObstacles--;
@@ -314,7 +320,7 @@ async function addCube(){
     cubeThree = carLoaddedd.children[0];
 	cubeThree.castShadow = true;
 	cubeThree.receiveShadow = true;
-    scene.add(cubeThree);
+    actor.add(cubeThree);
     cubeThree.scale.x = 0.05
     cubeThree.scale.y = 0.05
     cubeThree.scale.z = 0.05
@@ -337,7 +343,7 @@ function addPlane(z){
 	planeThree.position.set(0, 0, posZ);
 	planeThree.receiveShadow = true;
 	planeThree.castShadow = true;
-	scene.add(planeThree);
+	field.add(planeThree);
 	roadMesh.push(planeThree);
 
 	return groundMaterial;
@@ -359,7 +365,7 @@ function addObstacle(x, y, z, m, tipo){
 	obstacleMesh.castShadow = true;
 	obstacleMesh.receiveShadow = true;
 
-	scene.add(obstacleMesh);
+	obstacles.add(obstacleMesh);
 	obstaclesMeshes.push(obstacleMesh);
 }
 
@@ -367,14 +373,14 @@ function addObstacle2(z, m){
 	let obstacleShape = new CANNON.Box(new CANNON.Vec3(2, 20, 10));
 	var obstacleBody = new CANNON.Body({ mass: m });
 	obstacleBody.addShape(obstacleShape);
-	obstacleBody.position.set(3.5, 30,cubeBody.position.z-z);
+	obstacleBody.position.set(4, 30,cubeBody.position.z-z);
 	world.addBody(obstacleBody);
 	obstaclesBodies2.push(obstacleBody);
 
 	let obstacleShape2 = new CANNON.Box(new CANNON.Vec3(2, 20, 10));
 	var obstacleBody2 = new CANNON.Body({ mass: m });
 	obstacleBody2.addShape(obstacleShape2);
-	obstacleBody2.position.set(-3.5, 30,cubeBody.position.z-z);
+	obstacleBody2.position.set(-4, 30,cubeBody.position.z-z);
 	world.addBody(obstacleBody2);
 	obstaclesBodies2.push(obstacleBody2);
 	
@@ -392,8 +398,8 @@ function addObstacle2(z, m){
 	obstacleMesh2.castShadow = true;
 	obstacleMesh2.receiveShadow = true;
 
-	scene.add(obstacleMesh);
-	scene.add(obstacleMesh2);
+	obstacles.add(obstacleMesh);
+	obstacles.add(obstacleMesh2);
 	obstaclesMeshes2.push(obstacleMesh);
 	obstaclesMeshes2.push(obstacleMesh2);
 	
@@ -403,7 +409,7 @@ function addObstacle2(z, m){
 function addContactMaterials(groundMaterial, slipperyMaterial){
   const slippery_ground = new CANNON.ContactMaterial(groundMaterial, slipperyMaterial, {
     friction: 0.00,
-    restitution: 0.1, //bounciness
+    restitution: 0.0, //bounciness
     contactEquationStiffness: 1e8,
     contactEquationRelaxation: 3,
   })
@@ -489,6 +495,8 @@ function movePlayer(){
 
 	//Restart
 	if(keyboard[82] && !reset){
+		turbo = 100;
+		puntos = 0;
 		reset = true
 		roadMesh.forEach((item) => {
 			scene.remove(item);
@@ -599,14 +607,14 @@ async function addBackground(){
 	mountainMesh.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 180 *90);
 	mountainMesh.position.set(0, 60, -90);
 	mountainMesh.scale.set(0.008,0.008,0.008);
-	scene.add(mountainMesh);
+	field.add(mountainMesh);
 
 	const domeLoaded = await gltfLoader.loadAsync( 'skydome.glb' );
 	domeMesh = domeLoaded.scene.children[0];
 	domeMesh.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 180 *90);
 	domeMesh.position.set(0, -40, 0);
 	domeMesh.scale.set(0.1, 0.1, 0.1);
-	scene.add(domeMesh);
+	field.add(domeMesh);
 }
 
 function updateAspectRatio()
