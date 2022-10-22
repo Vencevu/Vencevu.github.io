@@ -26,15 +26,18 @@ let enableFollow = true;
 let world;
 let cannonDebugger;
 let timeStep = 1 / 60;
-let cubeBody, planeBody, carMaterial
-let obstacleBody;
+let cubeBody, planeBody, carMaterial;
 let mountainMesh, domeMesh;
 let obstaclesBodies = [];
 let obstaclesMeshes = [];
+let obstaclesBodies2 = [];
+let obstaclesMeshes2 = [];
 let numOfObstacles = 0;
 let maxObstacles = 5;
+let turbo = 100
 let roadMesh = []
 let roadBody = []
+let obstacleType2 = false;
 let reset = false;
 let light;
 init();
@@ -115,6 +118,43 @@ function getAxisAndAngelFromQuaternion(q) {
 	return { axis: new THREE.Vector3(q.x/s, q.y/s, q.z/s), angle };
   }
 
+function resetWorld(){
+	obstaclesBodies.forEach((item) => {
+		world.removeBody(item);
+	});
+	obstaclesBodies = []
+
+	obstaclesBodies2.forEach((item) => {
+		world.removeBody(item);
+	});
+	obstaclesBodies2 = []
+
+	obstaclesMeshes.forEach((item) => {
+		scene.remove(item);
+	});
+	obstaclesMeshes = []
+
+	obstaclesMeshes2.forEach((item) => {
+		scene.remove(item);
+	});
+	obstaclesMeshes2 = []
+
+	roadMesh.forEach((item) => {
+		scene.remove(item);
+	});
+	roadMesh = []
+
+	roadBody.forEach((item) => {
+		world.removeBody(item);
+	});
+	roadBody = []
+
+	world.removeBody(cubeBody);
+	carMaterial = addCubeBody();
+	var gM = addPlane();
+	addContactMaterials(gM, carMaterial);
+}
+
 function animate(){
 	if(game_over) {
 		document.getElementById("gameover").style.visibility = 'visible';
@@ -124,21 +164,12 @@ function animate(){
 			document.querySelector('#puntuacion label').innerText = 'Puntos: ' + puntos;
 			reset = true
 			game_over = false;
+			turbo = 100;
+			obstacleType2 = false;
+			numOfObstacles = 0;
 			document.getElementById("gameover").style.visibility = 'hidden';
-			roadMesh.forEach((item) => {
-				scene.remove(item);
-			});
-			roadMesh = []
-
-			roadBody.forEach((item) => {
-				world.removeBody(item);
-			});
-			roadBody = []
 			
-			world.removeBody(cubeBody);
-			carMaterial = addCubeBody();
-			var gM = addPlane();
-			addContactMaterials(gM, carMaterial);
+			resetWorld();
 		}
 		requestAnimationFrame(animate);
 		return;
@@ -159,20 +190,51 @@ function animate(){
     var my_angle = getAxisAndAngelFromQuaternion(cubeBody.quaternion).angle;
     cubeThree.quaternion.setFromAxisAngle(my_axis, my_angle);
 	
-	while(numOfObstacles < maxObstacles) {
+	while(numOfObstacles < maxObstacles && !obstacleType2) {
 		const x = THREE.MathUtils.randFloatSpread(20);
 		const y = THREE.MathUtils.randFloatSpread(10);
 		const z = THREE.MathUtils.randFloat(40, 60);
 		addObstacle(x, y, z, 100);
 		numOfObstacles++;
-	  }
+	}
 
+	if(cubeBody.position.y < -10) game_over = true;
+
+	if(puntos % 15 == 0 && !obstacleType2) {
+		addObstacle2(70, 200);
+		obstacleType2 = true;
+		
+	}
+
+	for (let i = 0; i < obstaclesBodies2.length; i++) {
+        obstaclesMeshes2[i].position.copy(obstaclesBodies2[i].position);
+		obstaclesMeshes2[i].quaternion.copy(obstaclesBodies2[i].quaternion);
+		if(obstaclesBodies2[i].position.z > cubeBody.position.z){
+			if(!containsObject(obstaclesBodies2[i], enabledPoints)){
+				puntos+=3;
+				if(turbo < 100) turbo+=20;
+				document.querySelector('#turbo label').innerText = 'Turbo: ' + turbo;
+				enabledPoints.push(obstaclesBodies2[i])
+				document.querySelector('#puntuacion label').innerText = 'Puntos: ' + puntos;
+			}
+		}
+		if(obstaclesBodies2[i].position.z -20 > cubeBody.position.z || obstaclesBodies2[i].position.y < -5){
+			world.removeBody(obstaclesBodies2[i]);
+			scene.remove(obstaclesMeshes2[i]);
+			obstaclesBodies2.splice(i, 1);
+			obstaclesMeshes2.splice(i, 1);
+			obstacleType2 = false;
+		}
+	}
+	
     for (let i = 0; i < obstaclesBodies.length; i++) {
         obstaclesMeshes[i].position.copy(obstaclesBodies[i].position);
 		obstaclesMeshes[i].quaternion.copy(obstaclesBodies[i].quaternion);
 		if(obstaclesBodies[i].position.z > cubeBody.position.z){
 			if(!containsObject(obstaclesBodies[i], enabledPoints)){
 				puntos++;
+				if(turbo < 100) turbo+=10;
+				document.querySelector('#turbo label').innerText = 'Turbo: ' + turbo;
 				enabledPoints.push(obstaclesBodies[i])
 				document.querySelector('#puntuacion label').innerText = 'Puntos: ' + puntos;
 			}
@@ -223,7 +285,7 @@ function containsObject(obj, list) {
 }
 
 function addCubeBody(){
-	let cubeShape = new CANNON.Box(new CANNON.Vec3(1.5,3,0.6));
+	let cubeShape = new CANNON.Box(new CANNON.Vec3(1.3,2.8,0.6));
 	var slipperyMaterial = new CANNON.Material('slippery');
 	cubeBody = new CANNON.Body({ mass: 100, material: slipperyMaterial});
 	cubeBody.addShape(cubeShape, new CANNON.Vec3(0,0,0));
@@ -281,17 +343,15 @@ function addPlane(z){
 	return groundMaterial;
 }
 
-function addObstacle(x, y, z, m){
-
-    let obstacleShape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
-    obstacleBody = new CANNON.Body({ mass: m });
-    obstacleBody.addShape(obstacleShape);
-    obstacleBody.position.set(x, y,cubeBody.position.z-z);
+function addObstacle(x, y, z, m, tipo){
+	let obstacleShape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+	var obstacleBody = new CANNON.Body({ mass: m });
+	obstacleBody.addShape(obstacleShape);
+	obstacleBody.position.set(x, y,cubeBody.position.z-z);
 	obstacleBody.velocity.set(0,0,10);
-    world.addBody(obstacleBody);
-    obstaclesBodies.push(obstacleBody);
- 
-	let geometry = new THREE.BoxGeometry(2,2,2);
+	world.addBody(obstacleBody);
+	obstaclesBodies.push(obstacleBody);
+		let geometry = new THREE.BoxGeometry(2,2,2);
 	const texture = new THREE.TextureLoader().load( "assets/obstacle.png" );
 
 	let material = new THREE.MeshLambertMaterial({color:'white', map: texture});
@@ -301,6 +361,41 @@ function addObstacle(x, y, z, m){
 
 	scene.add(obstacleMesh);
 	obstaclesMeshes.push(obstacleMesh);
+}
+
+function addObstacle2(z, m){
+	let obstacleShape = new CANNON.Box(new CANNON.Vec3(2, 20, 10));
+	var obstacleBody = new CANNON.Body({ mass: m });
+	obstacleBody.addShape(obstacleShape);
+	obstacleBody.position.set(3.5, 30,cubeBody.position.z-z);
+	world.addBody(obstacleBody);
+	obstaclesBodies2.push(obstacleBody);
+
+	let obstacleShape2 = new CANNON.Box(new CANNON.Vec3(2, 20, 10));
+	var obstacleBody2 = new CANNON.Body({ mass: m });
+	obstacleBody2.addShape(obstacleShape2);
+	obstacleBody2.position.set(-3.5, 30,cubeBody.position.z-z);
+	world.addBody(obstacleBody2);
+	obstaclesBodies2.push(obstacleBody2);
+	
+	let geometry = new THREE.BoxGeometry(4,40,20);
+	let geometry2 = new THREE.BoxGeometry(4,40,20);
+	const texture = new THREE.TextureLoader().load( "assets/obstacle.png" );
+	let material = new THREE.MeshLambertMaterial({color:'white', map: texture});
+
+	let obstacleMesh = new THREE.Mesh(geometry, material);
+	let obstacleMesh2 = new THREE.Mesh(geometry2, material);
+
+	obstacleMesh.castShadow = true;
+	obstacleMesh.receiveShadow = true;
+
+	obstacleMesh2.castShadow = true;
+	obstacleMesh2.receiveShadow = true;
+
+	scene.add(obstacleMesh);
+	scene.add(obstacleMesh2);
+	obstaclesMeshes2.push(obstacleMesh);
+	obstaclesMeshes2.push(obstacleMesh2);
 	
 }
 
@@ -335,7 +430,7 @@ function movePlayer(){
 	
 	if(keyboard[87]) {
 		if(cubeBody.position.y > 2){
-			cubeThree.rotateX(THREE.Math.degToRad(5));
+			cubeThree.rotateX(THREE.Math.degToRad(3));
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceForward = new CANNON.Vec3(0, -strengthWS, 0);
@@ -345,7 +440,7 @@ function movePlayer(){
 	
 	if(keyboard[83]) {
 		if(cubeBody.position.y > 2){
-			cubeThree.rotateX(THREE.Math.degToRad(-5));
+			cubeThree.rotateX(THREE.Math.degToRad(-3));
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceBack = new CANNON.Vec3(0, strengthWS, 0)
@@ -356,11 +451,11 @@ function movePlayer(){
 	//Giro
 	if(keyboard[65]) {
 		if(cubeBody.position.y < 2){
-			cubeThree.rotation.z += THREE.Math.degToRad(5);
+			cubeThree.rotation.z += THREE.Math.degToRad(3);
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			if(THREE.Math.radToDeg(cubeThree.rotation.y) > -84){
-				cubeThree.rotateY(THREE.Math.degToRad(5));
+				cubeThree.rotateY(THREE.Math.degToRad(3));
 				cubeBody.quaternion.copy(cubeThree.quaternion);
 			}
 		}
@@ -368,11 +463,11 @@ function movePlayer(){
 
 	if(keyboard[68]) {
 		if(cubeBody.position.y < 2){
-			cubeThree.rotation.z -= THREE.Math.degToRad(5);
+			cubeThree.rotation.z -= THREE.Math.degToRad(3);
 			cubeBody.quaternion.copy(cubeThree.quaternion);
 		}else{
 			if(THREE.Math.radToDeg(cubeThree.rotation.y) < 84){
-				cubeThree.rotateY(THREE.Math.degToRad(-5));
+				cubeThree.rotateY(THREE.Math.degToRad(-3));
 				cubeBody.quaternion.copy(cubeThree.quaternion);
 			}
 		}
@@ -386,7 +481,11 @@ function movePlayer(){
 
 	//Turbo
 	const forceTurbo= new CANNON.Vec3(0, -5000, 0)
-	if(keyboard[16]) cubeBody.applyLocalForce(forceTurbo);
+	if(keyboard[16] && turbo > 0) {
+		cubeBody.applyLocalForce(forceTurbo);
+		turbo -= 1;
+		document.querySelector('#turbo label').innerText = 'Turbo: ' + turbo;
+	}
 
 	//Restart
 	if(keyboard[82] && !reset){
