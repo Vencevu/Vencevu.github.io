@@ -436,7 +436,7 @@ function movePlayer(){
 	
 	if(keyboard[87]) {
 		if(cubeBody.position.y > 2){
-			cubeThree.rotateX(THREE.Math.degToRad(3));
+			cubeThree.rotateX(THREE.Math.degToRad(1));
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceForward = new CANNON.Vec3(0, -strengthWS, 0);
@@ -446,7 +446,7 @@ function movePlayer(){
 	
 	if(keyboard[83]) {
 		if(cubeBody.position.y > 2){
-			cubeThree.rotateX(THREE.Math.degToRad(-3));
+			cubeThree.rotateX(THREE.Math.degToRad(-1));
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			const forceBack = new CANNON.Vec3(0, strengthWS, 0)
@@ -457,11 +457,11 @@ function movePlayer(){
 	//Giro
 	if(keyboard[65]) {
 		if(cubeBody.position.y < 2){
-			cubeThree.rotation.z += THREE.Math.degToRad(3);
+			cubeThree.rotation.z += THREE.Math.degToRad(1);
 			cubeBody.quaternion.copy(cubeThree.quaternion)
 		}else{
 			if(THREE.Math.radToDeg(cubeThree.rotation.y) > -84){
-				cubeThree.rotateY(THREE.Math.degToRad(3));
+				cubeThree.rotateY(THREE.Math.degToRad(1));
 				cubeBody.quaternion.copy(cubeThree.quaternion);
 			}
 		}
@@ -469,11 +469,11 @@ function movePlayer(){
 
 	if(keyboard[68]) {
 		if(cubeBody.position.y < 2){
-			cubeThree.rotation.z -= THREE.Math.degToRad(3);
+			cubeThree.rotation.z -= THREE.Math.degToRad(1);
 			cubeBody.quaternion.copy(cubeThree.quaternion);
 		}else{
 			if(THREE.Math.radToDeg(cubeThree.rotation.y) < 84){
-				cubeThree.rotateY(THREE.Math.degToRad(-3));
+				cubeThree.rotateY(THREE.Math.degToRad(-1));
 				cubeBody.quaternion.copy(cubeThree.quaternion);
 			}
 		}
